@@ -27,7 +27,7 @@ if (!connection.TryGetLocatorAsUri(out Uri uri) || uri is null)
 uri = new Uri($"https://{uri.Host}");
 
 AzureOpenAIClient azureOpenAIClient = new AzureOpenAIClient(uri, credential);
-ChatClient chatClient = azureOpenAIClient.GetChatClient(deploymentName: "gpt5mini");
+ChatClient chatClient = azureOpenAIClient.GetChatClient(deploymentName: "gpt5MiniDeployment");
 
 AIAgent agent = chatClient.AsIChatClient().CreateAIAgent(
     name: "AGUIAssistant",
