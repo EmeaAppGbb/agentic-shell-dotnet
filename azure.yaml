@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: agentic-shell-dotnet
+services:
+  agentic-api:
+    project: src/agentic-api
+    host: containerapp
+    language: dotnet
+  agentic-ui:
+    project: src/agentic-ui
+    host: containerapp
+    language: ts
+resources:
+  agentic-api:
+    type: host.containerapp
+    port: 8080
+    uses:
+      - ai-project
+      - search
+      - agentic-storage
+  agentic-ui:
+    type: host.containerapp
+    uses:
+      - agentic-api
+    port: 80
+  ai-project:
+    type: ai.project
+    models:
+      - name: gpt-5-mini
+        version: "2025-08-07"
+        format: OpenAI
+        sku:
+          name: GlobalStandard
+          usageName: OpenAI.GlobalStandard.gpt-5-mini
+          capacity: 10
+  search:
+    type: ai.search
+  agentic-storage:
+    type: db.cosmos
