@@ -16,8 +16,6 @@ var foundry = builder.AddAzureAIFoundry("foundry")
 var api = builder.AddCSharpApp("agentic-api", "./src/agentic-api")
     .WithReference(foundry);
 
-
-
 var ui = builder.AddJavaScriptApp("agentic-ui", "./src/agentic-ui")
     .WithRunScript("dev")
     .WithNpm(installCommand: "ci")

@@ -1,11 +1,6 @@
-using Azure.AI.OpenAI;
-using Azure.AI.Projects;
-using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
-using OpenAI.Chat;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,26 +9,20 @@ builder.Services.AddAGUI();
 
 var app = builder.Build();
 
-var endpoint = builder.Configuration["AZURE_AI_PROJECT_ENDPOINT"];
-var credential = new DefaultAzureCredential();
-AIProjectClient projectClient = new AIProjectClient(new Uri(endpoint),credential );
+builder.AddAzureChatCompletionsClient(connectionName: "foundry")
+       .AddChatClient("gpt5MiniDeployment");
 
-var connection = projectClient.GetConnection(typeof(AzureOpenAIClient).FullName!);
+var agent = CreateAgent(app.Services);
 
-if (!connection.TryGetLocatorAsUri(out Uri uri) || uri is null)
-{
-    throw new InvalidOperationException("Invalid URI.");
-}
-uri = new Uri($"https://{uri.Host}");
-
-AzureOpenAIClient azureOpenAIClient = new AzureOpenAIClient(uri, credential);
-ChatClient chatClient = azureOpenAIClient.GetChatClient(deploymentName: "gpt5MiniDeployment");
-
-AIAgent agent = chatClient.AsIChatClient().CreateAIAgent(
-    name: "AGUIAssistant",
-    instructions: "You are a helpful assistant.");
-
-// // Map the AG-UI agent endpoint
 app.MapAGUI("/", agent);
+
+static AIAgent CreateAgent(IServiceProvider serviceProvider)
+{
+    var chatClient = serviceProvider.GetRequiredService<IChatClient>();
+    
+    return chatClient.CreateAIAgent(
+        name: "AGUIAssistant",
+        instructions: "You are a helpful assistant.");
+}
 
 await app.RunAsync();

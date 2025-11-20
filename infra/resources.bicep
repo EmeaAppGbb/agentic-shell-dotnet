@@ -282,7 +282,7 @@ module agenticUi 'br/public:avm/res/app/container-app:0.8.0' = {
   name: 'agenticUi'
   params: {
     name: 'agentic-ui'
-    ingressTargetPort: 80
+    ingressTargetPort: 3000
     scaleMinReplicas: 1
     scaleMaxReplicas: 10
     secrets: {
@@ -312,7 +312,7 @@ module agenticUi 'br/public:avm/res/app/container-app:0.8.0' = {
           }
           {
             name: 'PORT'
-            value: '80'
+            value: '3000'
           }
         ]
       }
