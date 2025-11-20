@@ -88,6 +88,8 @@ resource localUserCognitiveServicesUserRoleAssignment 'Microsoft.Authorization/r
 }
 
 output ENDPOINT string = aiAccount::project.properties.endpoints['AI Foundry API']
+output INFERERENCE_ENDPOINT string = aiAccount.properties.endpoints['Azure AI Model Inference API']
+output OPENAI_ENDPOINT string = aiAccount.properties.endpoints['OpenAI Language Model Instance API']
 output projectId string = aiAccount::project.id
 output aiServicesAccountName string = aiAccount.name
 output aiServicesProjectName string = aiAccount::project.name

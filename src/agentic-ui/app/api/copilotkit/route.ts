@@ -12,7 +12,9 @@ const serviceAdapter = new ExperimentalEmptyAdapter();
 //    AG-UI integration to setup the connection.
 const runtime = new CopilotRuntime({
   agents: {
-    my_agent: new HttpAgent({ url: "http://localhost:5149" }),
+    my_agent: new HttpAgent({ 
+      url: process.env.AGENT_API_URL || "http://localhost:5149" 
+    }),
   },
 });
 // 3. Build a Next.js API route that handles the CopilotKit runtime requests.

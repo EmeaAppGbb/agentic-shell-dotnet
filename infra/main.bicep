@@ -25,6 +25,8 @@ param principalId string
 @description('Principal type of user or app')
 param principalType string
 
+param deploymentName string = 'gpt5MiniDeployment'
+
 // Tags that should be applied to all resources.
 // 
 // Note that 'azd-service-name' tags should be applied separately to service host resources.
@@ -52,6 +54,8 @@ module resources 'resources.bicep' = {
     agenticApiExists: agenticApiExists
     agenticUiExists: agenticUiExists
     aiFoundryProjectEndpoint: aiModelsDeploy.outputs.ENDPOINT
+    openAiEndpoint: aiModelsDeploy.outputs.OPENAI_ENDPOINT
+    deploymentName: deploymentName
   }
 }
 
@@ -66,7 +70,7 @@ module aiModelsDeploy 'ai-project.bicep' = {
     principalType: principalType
     deployments: [
       {
-        name: 'gpt5MiniDeployment'
+        name: deploymentName
         model: {
           name: 'gpt-5-mini'
           format: 'OpenAI'
@@ -97,3 +101,4 @@ output AZURE_AI_PROJECT_ENDPOINT string = aiModelsDeploy.outputs.ENDPOINT
 output AZURE_RESOURCE_AI_PROJECT_ID string = aiModelsDeploy.outputs.projectId
 output AZURE_AI_SEARCH_ENDPOINT string = resources.outputs.AZURE_AI_SEARCH_ENDPOINT
 output AZURE_RESOURCE_SEARCH_ID string = resources.outputs.AZURE_RESOURCE_SEARCH_ID
+output AZURE_AI_INFERERENCE_ENDPOINT string = aiModelsDeploy.outputs.INFERERENCE_ENDPOINT

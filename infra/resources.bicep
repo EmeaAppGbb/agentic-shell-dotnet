@@ -8,6 +8,8 @@ param tags object = {}
 param agenticApiExists bool
 param agenticUiExists bool
 param aiFoundryProjectEndpoint string
+param openAiEndpoint string
+param deploymentName string
 
 @description('Id of the user or app to assign application roles')
 param principalId string
@@ -221,6 +223,14 @@ module agenticApi 'br/public:avm/res/app/container-app:0.8.0' = {
             value: aiFoundryProjectEndpoint
           }
           {
+            name:'AZURE_OPENAI_ENDPOINT'
+            value: openAiEndpoint
+          }
+          {
+            name:'AZURE_OPENAI_DEPLOYMENT_NAME'
+            value: deploymentName
+          }
+          {
             name: 'PORT'
             value: '8080'
           }
@@ -307,7 +317,7 @@ module agenticUi 'br/public:avm/res/app/container-app:0.8.0' = {
             value: agenticUiIdentity.outputs.clientId
           }
           {
-            name: 'AGENTIC-API_BASE_URL'
+            name: 'AGENT_API_URL'
             value: 'https://agentic-api.${containerAppsEnvironment.outputs.defaultDomain}'
           }
           {

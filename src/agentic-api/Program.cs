@@ -1,3 +1,5 @@
+using Azure.AI.OpenAI;
+using Azure.Identity;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
@@ -7,22 +9,30 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient().AddLogging();
 builder.Services.AddAGUI();
 
+string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"]
+    ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
+
+string deploymentName = builder.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
+    ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
+
 var app = builder.Build();
 
-builder.AddAzureChatCompletionsClient(connectionName: "foundry")
-       .AddChatClient("gpt5MiniDeployment");
-
-var agent = CreateAgent(app.Services);
+var agent = CreateAgent(endpoint, deploymentName);
 
 app.MapAGUI("/", agent);
 
-static AIAgent CreateAgent(IServiceProvider serviceProvider)
+static AIAgent CreateAgent(string endpoint, string deploymentName)
 {
-    var chatClient = serviceProvider.GetRequiredService<IChatClient>();
-    
-    return chatClient.CreateAIAgent(
+    var chatClient = new AzureOpenAIClient(
+        new Uri(endpoint),
+        new DefaultAzureCredential())
+    .GetChatClient(deploymentName);
+
+    AIAgent agent = chatClient.AsIChatClient().CreateAIAgent(
         name: "AGUIAssistant",
         instructions: "You are a helpful assistant.");
+
+        return agent;
 }
 
 await app.RunAsync();

@@ -7,14 +7,12 @@
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var existingFoundryName = builder.AddParameter("existingFoundryName");
-var existingFoundryResourceGroup = builder.AddParameter("existingFoundryResourceGroup");
-
-var foundry = builder.AddAzureAIFoundry("foundry")
-                     .AsExisting(existingFoundryName, existingFoundryResourceGroup);
+var openAiEndpoint = builder.AddParameter("openAiEndpoint");
+var openAiDeployment = builder.AddParameter("openAiDeployment");
 
 var api = builder.AddCSharpApp("agentic-api", "./src/agentic-api")
-    .WithReference(foundry);
+    .WithEnvironment("AZURE_OPENAI_ENDPOINT", openAiEndpoint)
+    .WithEnvironment("AZURE_OPENAI_DEPLOYMENT_NAME", openAiDeployment);
 
 var ui = builder.AddJavaScriptApp("agentic-ui", "./src/agentic-ui")
     .WithRunScript("dev")
