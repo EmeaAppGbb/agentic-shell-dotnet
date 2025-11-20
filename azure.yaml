@@ -18,4 +18,9 @@ resources:
     uses:
       - agentic-api
     port: 80
+hooks:
+  postprovision:
+    shell: sh
+    run: ./infra/scripts/postprovision.sh
+    continueOnError: false
 
