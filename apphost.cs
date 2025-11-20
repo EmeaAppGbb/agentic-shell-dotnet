@@ -14,7 +14,7 @@ var api = builder.AddCSharpApp("agentic-api", "./src/agentic-api")
     .WithEnvironment("AZURE_OPENAI_ENDPOINT", openAiEndpoint)
     .WithEnvironment("AZURE_OPENAI_DEPLOYMENT_NAME", openAiDeployment);
 
-var ui = builder.AddJavaScriptApp("agentic-ui", "./src/agentic-ui")
+builder.AddJavaScriptApp("agentic-ui", "./src/agentic-ui")
     .WithRunScript("dev")
     .WithNpm(installCommand: "ci")
     .WithReference(api)

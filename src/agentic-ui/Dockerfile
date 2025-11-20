@@ -16,7 +16,7 @@ COPY package.json package-lock.json* ./
 # Install all dependencies with optional dependencies included
 RUN npm install --include=optional
 # Ensure the correct native binaries are installed for Linux x64
-RUN npm install --no-save lightningcss-linux-x64-gnu@1.30.2 @tailwindcss/oxide-linux-x64-gnu
+RUN npm install --no-save lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
 COPY . .
 
 # Next.js collects completely anonymous telemetry data about general usage.

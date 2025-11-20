@@ -101,6 +101,5 @@ output AZURE_AI_PROJECT_ENDPOINT string = aiModelsDeploy.outputs.ENDPOINT
 output AZURE_RESOURCE_AI_PROJECT_ID string = aiModelsDeploy.outputs.projectId
 output AZURE_AI_SEARCH_ENDPOINT string = resources.outputs.AZURE_AI_SEARCH_ENDPOINT
 output AZURE_RESOURCE_SEARCH_ID string = resources.outputs.AZURE_RESOURCE_SEARCH_ID
-output AZURE_AI_INFERERENCE_ENDPOINT string = aiModelsDeploy.outputs.INFERERENCE_ENDPOINT
 output AZURE_OPENAI_ENDPOINT string = aiModelsDeploy.outputs.OPENAI_ENDPOINT
 output AZURE_OPENAI_DEPLOYMENT_NAME string = deploymentName
