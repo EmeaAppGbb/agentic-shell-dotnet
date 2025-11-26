@@ -1,10 +1,10 @@
 using Azure.AI.OpenAI;
 using Azure.Identity;
-using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.DevUI;
-using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
+using agentic_api.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,22 +17,30 @@ string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"]
 string deploymentName = builder.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
 
-var agent = CreateAgent(endpoint, deploymentName);
+// Register IChatClient
+builder.Services.AddSingleton(_ =>
+    new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
+        .GetChatClient(deploymentName)
+        .AsIChatClient());
 
-builder.AddAIAgent("AGUIAssistant", (_,_) => agent);
+// Register the dummy workflow factory
+builder.Services.AddSingleton<DummyWorkflowFactory>();
 
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
 
-// builder.AddSequentialWorkflow("my-workflow", [agent1Builder, agent2Builder])
-//     .AddAsAIAgent();
-
 var app = builder.Build();
+
+// Get the dummy workflow and convert it to an agent
+var dummyWorkflowFactory = app.Services.GetRequiredService<DummyWorkflowFactory>();
+var dummyWorkflow = dummyWorkflowFactory.BuildWorkflow("DummyWorkflow");
+var dummyAgent = dummyWorkflow.AsAgent(name: "DummyWorkflow");
 
 app.MapOpenAIResponses();
 app.MapOpenAIConversations();
 
-app.MapAGUI("/", agent);
+// Map the dummy workflow agent to the default AGUI endpoint
+app.MapAGUI("/", dummyAgent);
 
 if (builder.Environment.IsDevelopment())
 {
@@ -40,18 +48,5 @@ if (builder.Environment.IsDevelopment())
     app.MapDevUI();
 }
 
-static AIAgent CreateAgent(string endpoint, string deploymentName)
-{
-    var chatClient = new AzureOpenAIClient(
-        new Uri(endpoint),
-        new DefaultAzureCredential())
-    .GetChatClient(deploymentName);
-
-    AIAgent agent = chatClient.AsIChatClient().CreateAIAgent(
-        name: "AGUIAssistant",
-        instructions: "You are a helpful assistant.");
-
-        return agent;
-}
 
 await app.RunAsync();
