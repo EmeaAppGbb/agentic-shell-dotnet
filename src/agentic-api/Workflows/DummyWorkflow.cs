@@ -53,10 +53,10 @@ public sealed class DummyChatInputExecutor : Executor
 
     protected override Microsoft.Agents.AI.Workflows.RouteBuilder ConfigureRoutes(Microsoft.Agents.AI.Workflows.RouteBuilder routeBuilder) =>
         routeBuilder
-            .AddHandler<List<ChatMessage>, string>(HandleChatMessagesAsync)
+            .AddHandler<List<ChatMessage>, UserInputEvent>(HandleChatMessagesAsync)
             .AddHandler<TurnToken, string>(HandleTurnTokenAsync);
 
-    private async ValueTask<string> HandleChatMessagesAsync(
+    private async ValueTask<UserInputEvent> HandleChatMessagesAsync(
         List<ChatMessage> messages,
         IWorkflowContext context,
         CancellationToken cancellationToken = default)
@@ -66,7 +66,7 @@ public sealed class DummyChatInputExecutor : Executor
 
         _logger.LogInformation("Dummy Workflow started with input: {Input}", userInput);
 
-        return userInput;
+        return new UserInputEvent { Input = userInput };
     }
 
     private async ValueTask<string> HandleTurnTokenAsync(
@@ -85,7 +85,7 @@ public sealed class DummyChatInputExecutor : Executor
 /// <summary>
 /// Greeting executor that uses IChatClient to generate friendly AI greetings.
 /// </summary>
-public sealed class GreetingExecutor : Executor<string, string>
+public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse>
 {
     private readonly ILogger<GreetingExecutor> _logger;
     private readonly AIAgent _agent;
@@ -100,28 +100,38 @@ public sealed class GreetingExecutor : Executor<string, string>
         });
     }
 
-    public override async ValueTask<string> HandleAsync(
-        string input,
+    public override async ValueTask<AgentRunResponse> HandleAsync(
+        UserInputEvent input,
         IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Greeting executor received: {Input}", input);
+            _logger.LogInformation("Greeting executor received: {Input}", input.Input);
             _logger.LogInformation("Calling AI agent to generate greeting response");
 
-            var response = await _agent.RunAsync(new ChatMessage(ChatRole.User, input), cancellationToken: cancellationToken);
+            var response = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
             
             var responseText = response.Text ?? "Hi there!";
             _logger.LogInformation("AI agent responded with: {Response}", responseText);
 
-            return responseText;
+            return new AgentRunResponse { Text = responseText };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in greeting executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
                 ex.Message, ex.GetType().Name, ex.StackTrace);
-            return "Hi! I had trouble processing your message, but I'm here to help!";
+            return new AgentRunResponse { Text = "Hi! I had trouble processing your message, but I'm here to help!" };
         }
     }
+}
+
+public class UserInputEvent
+{
+    public string Input { get; set; }
+}
+
+public class AgentRunResponse
+{
+    public string Text { get; set; }
 }
