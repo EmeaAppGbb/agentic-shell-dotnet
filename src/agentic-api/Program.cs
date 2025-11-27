@@ -5,8 +5,12 @@ using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using agentic_api.Workflows;
+using Microsoft.Agents.AI.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 builder.Services.AddHttpClient().AddLogging();
 builder.Services.AddAGUI();
@@ -28,6 +32,11 @@ builder.Services.AddSingleton<DummyWorkflowFactory>();
 
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
+
+builder.AddWorkflow("DummyWorkflow" , (sp, name) => {
+    var factory = sp.GetRequiredService<DummyWorkflowFactory>();
+    return factory.BuildWorkflow("DummyWorkflow");
+}).AddAsAIAgent();
 
 var app = builder.Build();
 
