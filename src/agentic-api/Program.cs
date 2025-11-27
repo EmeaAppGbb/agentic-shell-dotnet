@@ -43,7 +43,7 @@ var app = builder.Build();
 // Get the dummy workflow and convert it to an agent
 var dummyWorkflowFactory = app.Services.GetRequiredService<DummyWorkflowFactory>();
 var dummyWorkflow = dummyWorkflowFactory.BuildWorkflow("DummyWorkflow");
-var dummyAgent = dummyWorkflow.AsAgent(name: "DummyWorkflow");
+var dummyAgent = new AGUIWorkflowAgent(dummyWorkflow.AsAgent(name: "DummyWorkflow"));
 
 app.MapOpenAIResponses();
 app.MapOpenAIConversations();
