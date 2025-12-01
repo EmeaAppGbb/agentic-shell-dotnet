@@ -8,7 +8,11 @@ license: MIT
 # APM dependencies replace git subtrees
 dependencies:
   apm:
-    - danielmeppiel/azure-standards@1.0.0
+    - EmeaAppGbb/spec2cloud-guidelines
+    - EmeaAppGbb/spec2cloud-guidelines-backend
+    - EmeaAppGbb/spec2cloud-guidelines-frontend
+
+
 
 # Workflow shortcuts - run with: apm run <script-name>
 scripts:
