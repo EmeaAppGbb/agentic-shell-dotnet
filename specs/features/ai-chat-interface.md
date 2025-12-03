@@ -4,7 +4,7 @@
 
 **Feature Name:** AI-Powered Chat Interface
 
-**Business Purpose:** Provide users with an intelligent conversational interface powered by Azure OpenAI to interact with AI agents through natural language.
+**Business Purpose:** Provide users with an intelligent conversational interface powered by Microsoft AI Foundry to interact with AI agents through natural language.
 
 **Current Status:** ✅ **Implemented** (Basic/Demo version)
 
@@ -24,20 +24,6 @@
 
 **Requirement:** Display a chat interface with a sidebar for user interaction
 
-**Implementation:** `src/agentic-ui/app/page.tsx`
-
-```typescript
-<CopilotSidebar
-  defaultOpen={true}
-  labels={{
-    title: "AI Assistant",
-    initial: "Hi! 👋 I'm your AI assistant. How can I help you today?",
-    placeholder: "Ask me anything...",
-  }}
-  instructions="You are a helpful AI assistant. Provide clear, concise, and accurate responses to user queries."
->
-```
-
 **Acceptance Criteria:**
 - ✅ Chat sidebar is visible on page load
 - ✅ Initial greeting message displayed
@@ -49,8 +35,6 @@
 ### FR-2: Message Input
 
 **Requirement:** Users can type messages in a text input field
-
-**Implementation:** Provided by CopilotKit's `CopilotSidebar` component
 
 **Acceptance Criteria:**
 - ✅ Text input field is accessible
@@ -68,25 +52,6 @@
 
 **Requirement:** User messages are sent to the backend AI agent for processing
 
-**Implementation:** `src/agentic-ui/app/api/copilotkit/route.ts`
-
-```typescript
-const runtime = new CopilotRuntime({
-  agents: {
-    my_agent: new HttpAgent({ 
-      url: process.env.AGENT_API_URL || "http://localhost:5149" 
-    }),
-  },
-});
-```
-
-**Data Flow:**
-1. User types message in sidebar
-2. CopilotKit captures input
-3. POST request to `/api/copilotkit`
-4. HttpAgent forwards to `AGENT_API_URL`
-5. Backend agent processes request
-
 **Acceptance Criteria:**
 - ✅ Messages successfully reach backend
 - ✅ HTTP connection established
@@ -97,24 +62,6 @@ const runtime = new CopilotRuntime({
 ### FR-4: Receive AI Responses
 
 **Requirement:** Display AI-generated responses in the chat interface
-
-**Implementation:** Backend workflow returns responses via AGUI protocol
-
-**Backend Processing:** `src/agentic-api/Workflows/DummyWorkflow.cs`
-
-```csharp
-public override async ValueTask<AgentRunResponse> HandleAsync(
-    UserInputEvent input,
-    IWorkflowContext context,
-    CancellationToken cancellationToken = default)
-{
-    var response = await _agent.RunAsync(
-        new ChatMessage(ChatRole.User, input.Input), 
-        cancellationToken: cancellationToken
-    );
-    return new AgentRunResponse { Text = response.Text ?? "Hi there!" };
-}
-```
 
 **Acceptance Criteria:**
 - ✅ AI responses displayed in chat
@@ -131,23 +78,7 @@ public override async ValueTask<AgentRunResponse> HandleAsync(
 
 ### FR-5: Streaming Responses (Partial)
 
-**Requirement:** Display AI responses as they are generated (streaming)
-
-**Implementation:** `src/agentic-api/AGUIWorkflowAgent.cs`
-
-```csharp
-public override async IAsyncEnumerable<AgentRunResponseUpdate> RunStreamingAsync(
-    IEnumerable<ChatMessage> messages,
-    AgentThread? thread = null,
-    AgentRunOptions? options = null,
-    [EnumeratorCancellation] CancellationToken cancellationToken = default)
-{
-    await foreach (var update in this.InnerAgent.RunStreamingAsync(messages, thread, options, cancellationToken))
-    {
-        yield return CreateUpdateFromEvent(update, outputEvent.Data);
-    }
-}
-```
+**Requirement:** Display AI responses as they are generated (streaming) to provide real-time feedback to users
 
 **Acceptance Criteria:**
 - ✅ Streaming infrastructure present
@@ -179,12 +110,6 @@ public override async IAsyncEnumerable<AgentRunResponseUpdate> RunStreamingAsync
 
 **Current State:** ❓ **Unknown**
 
-**Configuration:** `infra/resources.bicep`
-```bicep
-scaleMinReplicas: 1
-scaleMaxReplicas: 10
-```
-
 **Gaps:**
 - No health checks implemented
 - No monitoring dashboards
@@ -196,11 +121,6 @@ scaleMaxReplicas: 10
 **Requirement:** Support multiple concurrent users
 
 **Current State:** ⚠️ **Configured but Untested**
-
-**Autoscaling Configuration:**
-- Min: 1 replica
-- Max: 10 replicas
-- Trigger: HTTP traffic and CPU
 
 **Gaps:**
 - No load testing performed
@@ -230,7 +150,7 @@ scaleMaxReplicas: 10
 4. **User Action:** Press Enter or click Send
 5. **System Response:** Display "thinking" indicator (if implemented)
 6. **System Action:** Send message to backend agent
-7. **System Action:** Process with Azure OpenAI
+7. **System Action:** Process with AI service
 8. **System Response:** Display AI response in chat
 9. **User Action:** Continue conversation or ask follow-up question
 
@@ -246,207 +166,69 @@ scaleMaxReplicas: 10
 
 **Current State:** ⚠️ **Context Management Unclear**
 
-**Implementation Questions:**
+**Key Questions:**
 - Is conversation history maintained?
 - How many turns are remembered?
 - Is context persisted across sessions?
 
-**Code Analysis:** `DummyChatInputExecutor`
-```csharp
-var lastUserMessage = messages.LastOrDefault(m => m.Role == ChatRole.User);
-```
-
-**Observation:** Only the **last user message** is processed
-
-**Limitation:** No explicit conversation history management visible
+**Limitation:** Conversation context management not fully defined
 
 ## Dependencies
 
-### Frontend Dependencies
-- `@copilotkit/react-ui` - Chat sidebar component
-- `@copilotkit/react-core` - CopilotKit provider
-- `@copilotkit/runtime` - Agent runtime
-
-### Backend Dependencies
-- `Microsoft.Agents.AI.Workflows` - Workflow orchestration
-- `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` - AGUI endpoint
-- `Azure.AI.OpenAI` - OpenAI API client
-- `Microsoft.Extensions.AI` - AI abstractions
-
 ### External Services
-- **Azure OpenAI Service** - Required for AI responses
-  - Deployment: gpt-5-mini
-  - Endpoint configured via environment variable
+- **Microsoft AI Foundry** - Required for AI-powered responses and natural language processing
 
 ## Data Model
 
 ### Chat Message Structure
 
-**Frontend (CopilotKit):**
-```typescript
-interface ChatMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  metadata?: Record<string, any>;
-}
-```
+**Required Fields:**
+- **Role**: Identifies message sender (user, assistant, or system)
+- **Content**: The text content of the message
+- **Metadata** (optional): Additional context or attributes
 
-**Backend (Microsoft.Extensions.AI):**
-```csharp
-public class ChatMessage
-{
-    public ChatRole Role { get; set; }  // User, Assistant, System
-    public string? Text { get; set; }
-    // Additional properties...
-}
-```
+### Conversation Events
 
-### Workflow Events
-
-**User Input Event:** `src/agentic-api/Workflows/DummyWorkflow.cs`
-```csharp
-public class UserInputEvent
-{
-    public string Input { get; set; }
-}
-```
+**User Input:**
+- User-submitted text messages
+- Timestamps for tracking
 
 **Agent Response:**
-```csharp
-public class AgentRunResponse
-{
-    public string Text { get; set; }
-}
-```
+- AI-generated text responses
+- Response metadata (timing, token count, etc.)
 
-## Configuration
+## Configuration Requirements
 
-### Frontend Configuration
+### Required Configuration
 
-**Environment Variables:**
-- `AGENT_API_URL` - Backend API endpoint
-  - Default: `http://localhost:5149`
-  - Production: Set by Aspire/Azure
+**AI Service Connection:**
+- Microsoft AI Foundry service endpoint configuration
+- AI model deployment identifier
+- Authentication credentials (managed identity or API key)
 
-**CopilotKit Configuration:** `src/agentic-ui/app/layout.tsx`
-```typescript
-<CopilotKit runtimeUrl="/api/copilotkit" agent="my_agent">
-```
-
-### Backend Configuration
-
-**Required Environment Variables:**
-- `AZURE_OPENAI_ENDPOINT` - OpenAI service endpoint (required)
-- `AZURE_OPENAI_DEPLOYMENT_NAME` - Model deployment name (required)
-- `AZURE_CLIENT_ID` - Managed identity ID (production)
-
-**Agent Configuration:** `src/agentic-api/Program.cs`
-```csharp
-builder.AddWorkflow("DummyWorkflow" , (sp, name) => {
-    var factory = sp.GetRequiredService<DummyWorkflowFactory>();
-    return factory.BuildWorkflow("DummyWorkflow");
-}).AddAsAIAgent();
-```
-
-**AI Model Configuration:**
-```csharp
-new ChatClientAgentOptions
-{
-    Name = "GreetingAgent",
-    Instructions = "You are a friendly AI assistant. Greet the user warmly and respond to their message with enthusiasm."
-}
-```
+**Agent Behavior:**
+- Agent instructions and personality definition
+- Response guidelines and constraints
+- Timeout and retry policies
 
 ## Error Handling
 
-### Frontend Error Handling
+### Required Error Handling Capabilities
 
-**Current Implementation:** Relies on CopilotKit's built-in error handling
+**User-Facing Errors:**
+- Display clear, actionable error messages when AI service is unavailable
+- Provide fallback responses when processing fails
+- Show connection status indicators
 
-**Gaps:**
-- No custom error messages
-- No user-friendly error display
-- No error logging
-- No fallback behavior
+**System Error Handling:**
+- Handle AI service timeouts gracefully
+- Retry failed requests with exponential backoff
+- Log errors for monitoring and debugging
+- Implement circuit breaker for service protection
 
-### Backend Error Handling
-
-**Implementation:** `src/agentic-api/Workflows/DummyWorkflow.cs`
-
-```csharp
-try
-{
-    var response = await _agent.RunAsync(...);
-    return new AgentRunResponse { Text = responseText };
-}
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Error in greeting executor");
-    return new AgentRunResponse { 
-        Text = "Hi! I had trouble processing your message, but I'm here to help!" 
-    };
-}
-```
-
-**Positive:** Basic try-catch with fallback message
-
-**Gaps:**
-- Only implemented in GreetingExecutor
-- No specific exception handling (e.g., rate limits, auth failures)
-- No retry logic
-- No circuit breaker pattern
-
-## Testing Status
-
-### Unit Tests: ❌ **NONE**
-
-No unit tests found for:
-- Chat input processing
-- Workflow execution
-- Agent response handling
-- Error scenarios
-
-### Integration Tests: ❌ **NONE**
-
-No integration tests found for:
-- End-to-end message flow
-- Azure OpenAI integration
-- Error handling
-- Multi-turn conversations
-
-### Manual Testing: ⚠️ **Assumed but Not Documented**
-
-No evidence of:
-- Test plans
-- Test cases
-- Test results
-- Bug tracking
-
-## Security Considerations
-
-### Input Validation: ❌ **NOT IMPLEMENTED**
-
-**Risks:**
-- No input length limits (potential for abuse)
-- No content filtering (profanity, harmful content)
-- Prompt injection attacks possible
-- Resource exhaustion via large inputs
-
-### Rate Limiting: ❌ **NOT IMPLEMENTED**
-
-**Risks:**
-- Users can send unlimited messages
-- Potential for cost overruns
-- DoS vulnerability
-- No per-user quotas
-
-### Authentication: ❌ **NOT IMPLEMENTED**
-
-**Risks:**
-- Any user can access the chat
-- No conversation privacy
-- No usage attribution
-- No access control
+**Current State:**
+- Basic error handling present (fallback messages)
+- Missing: Specific exception handling, retry logic, circuit breaker patterns
 
 ## Limitations and Known Issues
 
@@ -536,26 +318,3 @@ No evidence of:
 - Accessibility verification
 - Performance testing
 - Monitoring and analytics
-
-## Recommendation for Modernization
-
-### Critical (Before Production)
-1. Implement input validation and sanitization
-2. Add rate limiting per user/IP
-3. Implement user authentication
-4. Add error handling and user feedback
-5. Establish monitoring and alerting
-
-### High Priority
-6. Implement conversation history persistence
-7. Add performance testing and optimization
-8. Enhance agent capabilities beyond "dummy" implementation
-9. Add accessibility compliance testing
-10. Implement proper logging and analytics
-
-### Medium Priority
-11. Add rich content rendering (markdown, code)
-12. Implement user preferences and customization
-13. Add conversation export and search
-14. Create admin dashboard for monitoring
-15. Develop mobile-responsive improvements
