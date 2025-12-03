@@ -344,11 +344,6 @@ Microsoft Agent Framework frontend integration.
 - No code coverage tools
 - No CI/CD pipelines with test execution
 
-**Implications for Modernization:**
-- Testing infrastructure needs to be established
-- Test coverage is unknown (likely 0%)
-- No automated quality gates
-
 ## External Dependencies & Services
 
 ### Required Azure Services
@@ -427,12 +422,6 @@ The application heavily uses preview and beta versions:
 - Azure Identity (beta)
 - Aspire Azure AI Foundry integration (preview)
 - Microsoft.Extensions.AI.OpenAI (preview)
-
-**Implications:**
-- Rapid API changes possible
-- Limited production-readiness documentation
-- Potential breaking changes in future releases
-- Requires monitoring of package updates
 
 ### Modern Patterns
 - **Managed Identity** for authentication (no secrets)

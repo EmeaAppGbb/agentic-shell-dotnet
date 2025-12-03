@@ -20,12 +20,6 @@ These are the core dependencies for building and hosting AI agents using the Mic
 | `Microsoft.Agents.AI.Hosting.OpenAI` | `1.0.0-alpha.251125.1` | **Alpha** | OpenAI-specific hosting extensions |
 | `Microsoft.Agents.AI.DevUI` | `1.0.0-preview.251125.1` | Preview | Developer testing UI |
 
-**Risk Assessment:**
-- ⚠️ **Alpha/Preview software** - API instability expected
-- ⚠️ **Breaking changes likely** - Version 1.0.0 not yet released
-- ⚠️ **Limited documentation** - New framework with evolving patterns
-- ✅ **Microsoft-backed** - Official Microsoft project with support
-
 **Dependency Chain:**
 ```
 Microsoft.Agents.AI.Hosting.AGUI.AspNetCore
@@ -42,12 +36,6 @@ Microsoft.Agents.AI.Hosting.AGUI.AspNetCore
 | `Microsoft.Extensions.AI.OpenAI` | `10.0.1-preview.1.25571.5` | Preview | Unified AI abstractions for OpenAI |
 | `Aspire.Azure.AI.Inference` | `13.0.0-preview.1.25560.3` | Preview | .NET Aspire AI service integration |
 
-**Risk Assessment:**
-- ⚠️ **Beta/Preview versions** - Not production-ready
-- ⚠️ **Azure AI Foundry** - New service, evolving platform
-- ✅ **Azure SDK patterns** - Follows established Azure SDK guidelines
-- ✅ **Active development** - Frequent updates and improvements
-
 **Dependency Chain:**
 ```
 Aspire.Azure.AI.Inference
@@ -60,11 +48,6 @@ Aspire.Azure.AI.Inference
 | Package | Version | Status | Purpose |
 |---------|---------|--------|---------|
 | `Azure.Identity` | `1.18.0-beta.1` | Beta | Azure authentication (DefaultAzureCredential) |
-
-**Risk Assessment:**
-- ⚠️ **Beta version** - Though authentication patterns are well-established
-- ✅ **Mature API surface** - Core patterns stable across versions
-- ✅ **Security-focused** - Managed identity, no secrets in code
 
 **Authentication Flow:**
 ```
@@ -81,11 +64,6 @@ DefaultAzureCredential attempts:
 | Package | Version | Status | Purpose |
 |---------|---------|--------|---------|
 | `Microsoft.AspNetCore.OpenApi` | `10.0.0` | Release | OpenAPI/Swagger documentation |
-
-**Risk Assessment:**
-- ✅ **.NET 10.0** - Latest stable .NET release
-- ✅ **Framework component** - Included with .NET SDK
-- ✅ **Stable API** - Mature OpenAPI implementation
 
 ### Implicit Dependencies
 
@@ -107,12 +85,6 @@ These are automatically included with .NET 10.0 SDK:
 | `react` | `19.2.0` | Release | Core React library |
 | `react-dom` | `19.2.0` | Release | React DOM rendering |
 
-**Risk Assessment:**
-- ✅ **Latest stable releases** - React 19 and Next.js 16
-- ✅ **Active maintenance** - Regular updates and patches
-- ⚠️ **React 19 breaking changes** - New features, deprecated APIs
-- ⚠️ **Next.js 16 Turbopack** - New bundler, potential issues
-
 **React 19 New Features Used:**
 - Automatic JSX transform (`react-jsx`)
 - Modern hooks and concurrent rendering
@@ -126,11 +98,6 @@ These are automatically included with .NET 10.0 SDK:
 | `@copilotkit/react-ui` | `^1.10.6` | Release | Pre-built UI components |
 | `@copilotkit/runtime` | `^1.10.6` | Release | Agent runtime and execution |
 
-**Risk Assessment:**
-- ✅ **Stable release** - Version 1.10.x
-- ✅ **Active project** - Regular updates and community support
-- ℹ️ **Third-party dependency** - Not Microsoft-owned
-
 **CopilotKit Component Usage:**
 - `CopilotKit` - Provider component wrapping the app
 - `CopilotSidebar` - Chat interface component
@@ -143,12 +110,6 @@ These are automatically included with .NET 10.0 SDK:
 |---------|---------|--------|---------|
 | `@ag-ui/client` | `^0.0.41` | **Pre-1.0** | HTTP client for Microsoft Agent Framework |
 | `@ag-ui/langgraph` | `^0.0.18` | **Pre-1.0** | LangGraph integration |
-
-**Risk Assessment:**
-- ⚠️ **Pre-1.0 versions** (0.0.x) - Experimental, unstable API
-- ⚠️ **Rapid changes expected** - Frequent breaking changes likely
-- ⚠️ **Limited documentation** - New packages with evolving APIs
-- ✅ **Microsoft-backed** - Part of Microsoft Agent Framework
 
 **Usage Pattern:**
 ```typescript
@@ -164,11 +125,6 @@ new HttpAgent({
 | `@tailwindcss/postcss` | `^4` | Release | Tailwind CSS v4 PostCSS plugin |
 | `tailwindcss` | `^4` | Release | Utility-first CSS framework |
 
-**Risk Assessment:**
-- ✅ **Tailwind CSS v4** - Latest major version
-- ✅ **Mature framework** - Established patterns and community
-- ℹ️ **PostCSS integration** - Requires proper build configuration
-
 ### Development Dependencies
 
 | Package | Version | Status | Purpose |
@@ -179,11 +135,6 @@ new HttpAgent({
 | `@types/node` | `^20` | Release | Node.js type definitions |
 | `@types/react` | `^19` | Release | React type definitions |
 | `@types/react-dom` | `^19` | Release | React DOM type definitions |
-
-**Risk Assessment:**
-- ✅ **All stable releases** - No preview/beta dev dependencies
-- ✅ **Type safety** - Full TypeScript coverage
-- ✅ **Linting** - Code quality enforcement
 
 ### Transitive Dependencies
 
@@ -204,11 +155,6 @@ new HttpAgent({
 | `Aspire.Hosting.Azure.CognitiveServices` | `13.0.0` | Release | Azure Cognitive Services integration |
 | `Aspire.Hosting.Azure.AIFoundry` | `13.0.0-preview.1.25560.3` | Preview | Azure AI Foundry integration |
 
-**Risk Assessment:**
-- ✅ **.NET Aspire 13.0** - Stable release
-- ⚠️ **AI Foundry integration** - Preview version
-- ✅ **Microsoft-supported** - Part of .NET ecosystem
-
 ## Infrastructure Dependencies
 
 ### Azure Bicep Modules
@@ -227,11 +173,6 @@ new HttpAgent({
 | `avm/res/managed-identity/user-assigned-identity` | `0.2.1` | Managed identities |
 | `avm/res/app/container-app` | `0.8.0` | Container Apps |
 
-**Risk Assessment:**
-- ✅ **Azure Verified Modules** - Microsoft-maintained
-- ✅ **Stable versions** - Production-ready modules
-- ✅ **Regular updates** - Active maintenance
-
 ## Development Environment Dependencies
 
 ### APM Dependencies
@@ -243,11 +184,6 @@ new HttpAgent({
 | `EmeaAppGbb/spec2cloud-guidelines` | APM | General engineering standards |
 | `EmeaAppGbb/spec2cloud-guidelines-backend` | APM | Backend-specific standards |
 | `EmeaAppGbb/spec2cloud-guidelines-frontend` | APM | Frontend-specific standards |
-
-**Risk Assessment:**
-- ℹ️ **Custom packages** - Organization-specific standards
-- ℹ️ **No versioning** - Latest versions used
-- ℹ️ **Documentation dependency** - Not runtime dependencies
 
 ### Python Dependencies (Dev Container)
 
@@ -268,7 +204,6 @@ new HttpAgent({
 **Missing:**
 - `dependabot.yml` or `renovate.json`
 - Security vulnerability scanning
-- License compliance checking
 - Automated PR creation for updates
 
 ### Version Pinning Strategy
@@ -286,91 +221,6 @@ new HttpAgent({
 **Infrastructure (Bicep):**
 - Explicit module versions
 - No automatic module updates
-
-## Critical Dependency Risks
-
-### High Priority
-
-1. **Preview/Alpha Software in Production Path**
-   - All Microsoft Agent Framework packages are preview/alpha
-   - AG-UI packages are 0.0.x (pre-release)
-   - **Mitigation:** Pin to specific versions, test thoroughly before updating
-
-2. **Azure OpenAI Beta SDK**
-   - Core functionality depends on beta SDK
-   - **Mitigation:** Monitor for v2.5.0 stable release
-
-3. **Next.js 16 Turbopack**
-   - New bundler with potential stability issues
-   - **Mitigation:** Monitor Next.js issue tracker, have fallback to Webpack
-
-### Medium Priority
-
-4. **React 19 Ecosystem**
-   - Recently released, library compatibility still evolving
-   - **Mitigation:** Test all React libraries for React 19 compatibility
-
-5. **No Automated Security Scanning**
-   - Vulnerable dependencies undetected
-   - **Mitigation:** Implement Dependabot or Snyk integration
-
-6. **.NET 10.0 Early Adoption**
-   - Newest .NET version, potential runtime issues
-   - **Mitigation:** Monitor .NET release notes and known issues
-
-### Low Priority
-
-7. **APM Package Updates**
-   - No versioning strategy for internal guidelines
-   - **Mitigation:** Implement semantic versioning for APM packages
-
-## Recommendations for Modernization
-
-### Immediate Actions
-
-1. **Implement Dependabot**
-   - Enable automated dependency updates
-   - Configure security vulnerability alerts
-   - Group updates by ecosystem
-
-2. **Add Security Scanning**
-   - Integrate Snyk or GitHub Advanced Security
-   - Scan on every PR and scheduled basis
-   - Block merges on critical vulnerabilities
-
-3. **Create Dependency Update Process**
-   - Document update testing procedures
-   - Define rollback strategy
-   - Establish update cadence (weekly/monthly)
-
-### Short-term Actions
-
-4. **Monitor Preview Packages**
-   - Subscribe to Microsoft Agent Framework releases
-   - Plan migration to stable versions when available
-   - Document breaking changes and migration paths
-
-5. **Establish Version Pinning Policy**
-   - Backend: Continue exact versions
-   - Frontend: Consider exact versions for critical packages
-   - Infrastructure: Continue explicit versioning
-
-6. **Add License Compliance**
-   - Inventory all licenses in use
-   - Ensure compatibility with project license
-   - Document license requirements
-
-### Long-term Actions
-
-7. **Dependency Health Dashboard**
-   - Create visibility into dependency health
-   - Track update lag (time behind latest)
-   - Monitor end-of-life dates
-
-8. **Supply Chain Security**
-   - Implement SBOM generation
-   - Verify package signatures
-   - Audit dependency sources
 
 ## Dependency Graph
 
@@ -416,16 +266,3 @@ package.json
 - **Frontend Dev:** 6 direct dependencies (development)
 - **Infrastructure:** 8 Azure modules
 - **APM:** 3 guideline packages
-
-### Risk Distribution
-
-- **High Risk:** 30% (Preview/Alpha/Pre-1.0)
-- **Medium Risk:** 20% (Beta)
-- **Low Risk:** 50% (Stable releases)
-
-### Update Urgency
-
-- **Critical:** Establish security scanning
-- **High:** Monitor preview package stability
-- **Medium:** Implement automated updates
-- **Low:** Document dependency policies

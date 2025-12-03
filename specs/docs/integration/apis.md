@@ -581,12 +581,6 @@ var chatClient = new AzureOpenAIClient(endpoint, credential)
 - No version in URLs
 - Breaking changes would affect all clients
 
-**Recommendation:**
-```
-/v1/
-/api/v1/copilotkit
-```
-
 ## API Documentation: PARTIAL
 
 **OpenAPI/Swagger:**
@@ -594,15 +588,6 @@ var chatClient = new AzureOpenAIClient(endpoint, credential)
 - ❌ No Swagger UI endpoint exposed
 - ❌ No OpenAPI spec generation configured
 - ❌ No API documentation site
-
-**Recommendation:**
-```csharp
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-app.UseSwagger();
-app.UseSwaggerUI();
-```
 
 ## CORS Configuration
 
@@ -624,16 +609,6 @@ corsPolicy: {
 - ⚠️ Wildcard methods (overly permissive)
 - ❌ No credentials policy
 - ❌ No exposed headers configuration
-
-**Recommendation:**
-```bicep
-corsPolicy: {
-  allowedOrigins: ['https://agentic-ui...']
-  allowedMethods: ['POST', 'OPTIONS']
-  allowCredentials: false
-  maxAge: 3600
-}
-```
 
 ## WebSocket/SignalR: NOT IMPLEMENTED
 
@@ -803,51 +778,6 @@ _logger.LogError(ex, "Error in greeting executor");
    - No event notifications
    - No async processing callbacks
    - No integration webhooks
-
-## Recommendations for Modernization
-
-### High Priority
-
-1. **Implement Authentication**
-   - Add JWT token validation
-   - Integrate with Azure AD B2C
-   - API key management
-
-2. **Add Input Validation**
-   - Request size limits
-   - Content validation
-   - Rate limiting
-
-3. **Document APIs**
-   - Generate OpenAPI spec
-   - Add Swagger UI
-   - Create developer portal
-
-### Medium Priority
-
-4. **Implement Monitoring**
-   - Custom metrics
-   - Performance tracking
-   - User analytics
-
-5. **Add API Versioning**
-   - Version in URL or header
-   - Backward compatibility strategy
-   - Deprecation policy
-
-6. **Enhance Error Handling**
-   - Structured error responses
-   - Error codes and categories
-   - Retry guidance
-
-### Low Priority
-
-7. **Implement Webhooks**
-   - Event notifications
-   - Integration callbacks
-   - Async processing
-
-8. **Add Batch Operations**
    - Bulk request processing
    - Queue-based architecture
    - Background job processing
