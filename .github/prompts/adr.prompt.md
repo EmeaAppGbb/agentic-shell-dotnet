@@ -1,4 +1,3 @@
-```prompt
 ---
 agent: architect
 ---
