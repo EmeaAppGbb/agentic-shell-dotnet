@@ -852,6 +852,69 @@ dotnet restore
 User Input → ChatInputExecutor → [ProcessingExecutors...] → OutputExecutor → Response
 ```
 
+### Streaming Messages to the UI
+
+**When building workflows with Microsoft Agent Framework, to stream messages back to the UI:**
+
+**1. Emit events from executors using `YieldOutputAsync`:**
+
+At any point where you want to send intermediate results or status updates to the UI, call:
+
+```csharp
+await context.YieldOutputAsync(new AgentMessage 
+{ 
+    Text = "Your message content here",
+    // Map additional properties as needed
+});
+```
+
+This is particularly useful for:
+- Multi-step workflows where each executor produces visible output
+- Iterative processes (e.g., one agent creates an artifact, another reviews and approves it)
+- Progress updates during long-running operations
+
+**Example:**
+```csharp
+public class ReviewExecutor : ExecutorBase<ArtifactEvent, ReviewEvent>
+{
+    protected override async ValueTask ExecuteAsync(
+        ArtifactEvent input,
+        CancellationToken cancellationToken)
+    {
+        // Stream status to UI
+        await context.YieldOutputAsync(new AgentMessage 
+        { 
+            Text = "Reviewing artifact..."
+        });
+        
+        var review = await _reviewService.ReviewAsync(input.Artifact);
+        
+        // Stream result to UI
+        await context.YieldOutputAsync(new AgentMessage 
+        { 
+            Text = $"Review complete: {review.Status}"
+        });
+        
+        return new ExecutionResult<ReviewEvent>(new ReviewEvent { Review = review });
+    }
+}
+```
+
+**2. Register executors as output sources in the workflow builder:**
+
+When building the workflow, mark any executor that calls `YieldOutputAsync` as an output source:
+
+```csharp
+var workflow = new WorkflowBuilder(inputExecutor)
+    .AddEdge(inputExecutor, processingExecutor)
+    .WithOutputFrom(processingExecutor)  // Register as output source
+    .AddEdge(processingExecutor, reviewExecutor)
+    .WithOutputFrom(reviewExecutor)      // Register as output source
+    .Build();
+```
+
+**Important**: Every executor that calls `YieldOutputAsync` must be registered with `.WithOutputFrom()`, otherwise its messages won't be streamed to the UI.
+
 **Example**:
 ```csharp
 // 1. Input Executor
