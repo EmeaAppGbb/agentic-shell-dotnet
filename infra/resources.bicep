@@ -10,6 +10,7 @@ param agenticUiExists bool
 param aiFoundryProjectEndpoint string
 param openAiEndpoint string
 param deploymentName string
+param imageDeploymentName string
 
 @description('Id of the user or app to assign application roles')
 param principalId string
@@ -229,6 +230,10 @@ module agenticApi 'br/public:avm/res/app/container-app:0.8.0' = {
           {
             name:'AZURE_OPENAI_DEPLOYMENT_NAME'
             value: deploymentName
+          }
+          {
+            name:'AZURE_IMAGE_MODEL_DEPLOYMENT_NAME'
+            value: imageDeploymentName
           }
           {
             name: 'PORT'

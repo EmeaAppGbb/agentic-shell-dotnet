@@ -1,6 +1,7 @@
 {
     "Parameters": {
         "openAiEndpoint": "",
-        "openAiDeployment": ""
+        "openAiDeployment": "",
+        "imageModelDeployment": ""
     }
 }
