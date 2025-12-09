@@ -49,7 +49,7 @@ export default function Page() {
                 Fast Responses
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Get instant answers to your questions with AI-powered intelligence.
+                Get instant answers with AI-powered intelligence. Input validation ensures quality messages under 4000 characters.
               </p>
             </div>
 
@@ -60,10 +60,10 @@ export default function Page() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Contextual Understanding
+                Rich Content Support
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Advanced AI that understands context and provides relevant answers.
+                Advanced AI with markdown rendering and code syntax highlighting for technical content.
               </p>
             </div>
 
@@ -74,10 +74,10 @@ export default function Page() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Secure & Private
+                Reliable & Monitored
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Your conversations are handled securely with enterprise-grade protection.
+                Built-in health checks, error handling, and rate limiting ensure a stable experience.
               </p>
             </div>
           </div>
