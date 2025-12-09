@@ -171,9 +171,9 @@ All components use Tailwind CSS with dark mode support. The styling is consisten
 
 ```json
 {
-  "react-markdown": "^9.0.0",
-  "remark-gfm": "^4.0.0",
-  "rehype-highlight": "^7.0.0"
+  "react-markdown": "^10.1.0",
+  "remark-gfm": "^4.0.1",
+  "rehype-highlight": "^7.0.2"
 }
 ```
 

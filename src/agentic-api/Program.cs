@@ -18,12 +18,13 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpClient().AddLogging();
 builder.Services.AddAGUI();
 
-// Configure request timeout
+// Configure request timeout from configuration or use default
+var timeoutSeconds = builder.Configuration.GetValue<int?>("RequestTimeoutSeconds") ?? 120;
 builder.Services.AddRequestTimeouts(options =>
 {
     options.DefaultPolicy = new Microsoft.AspNetCore.Http.Timeouts.RequestTimeoutPolicy
     {
-        Timeout = TimeSpan.FromSeconds(120) // 2 minutes default timeout
+        Timeout = TimeSpan.FromSeconds(timeoutSeconds)
     };
 });
 

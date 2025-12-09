@@ -9,6 +9,7 @@ interface ChatInputProps {
 }
 
 const MAX_MESSAGE_LENGTH = 4000;
+const MAX_LENGTH_BUFFER = 100; // Allow slight overflow for warning display
 const RATE_LIMIT_INTERVAL = 2000; // 2 seconds between messages
 const RATE_LIMIT_MAX_MESSAGES = 10; // Max 10 messages per minute
 
@@ -58,8 +59,9 @@ export function ChatInput({ onSubmit, disabled = false, placeholder = "Ask me an
       return;
     }
 
+    // Character limit is already enforced by UI, this is a safety check
     if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
-      alert(`Message is too long. Maximum ${MAX_MESSAGE_LENGTH} characters allowed.`);
+      // Error is already visible in the UI, just prevent submission
       return;
     }
 
@@ -121,7 +123,7 @@ export function ChatInput({ onSubmit, disabled = false, placeholder = "Ask me an
             ${isRateLimited ? 'opacity-50 cursor-not-allowed' : ''}
             dark:bg-gray-800 dark:text-white`}
           rows={3}
-          maxLength={MAX_MESSAGE_LENGTH + 100} // Allow slightly over for warning
+          maxLength={MAX_MESSAGE_LENGTH + MAX_LENGTH_BUFFER} // Allow buffer for warning display
           aria-label="Chat message input"
           aria-invalid={isOverLimit}
           aria-describedby="char-count"
