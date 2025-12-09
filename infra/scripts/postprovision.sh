@@ -29,6 +29,7 @@ eval "$(azd env get-values)"
 
 OPENAI_ENDPOINT="${AZURE_OPENAI_ENDPOINT:-}"
 OPENAI_DEPLOYMENT="${AZURE_OPENAI_DEPLOYMENT_NAME:-}"
+IMAGE_MODEL_DEPLOYMENT="${AZURE_IMAGE_MODEL_DEPLOYMENT_NAME:-}"
 
 # Validate required variables
 if [ -z "$OPENAI_ENDPOINT" ]; then
@@ -41,19 +42,26 @@ if [ -z "$OPENAI_DEPLOYMENT" ]; then
     OPENAI_DEPLOYMENT=""
 fi
 
+if [ -z "$IMAGE_MODEL_DEPLOYMENT" ]; then
+    echo -e "\033[0;33mWarning: AZURE_IMAGE_MODEL_DEPLOYMENT_NAME environment variable is not set\033[0m"
+    IMAGE_MODEL_DEPLOYMENT=""
+fi
+
 # Update the settings file using jq
 if command -v jq &> /dev/null; then
     # Use jq if available for proper JSON manipulation
-    jq --arg endpoint "$OPENAI_ENDPOINT" --arg deployment "$OPENAI_DEPLOYMENT" \
-        '.Parameters.openAiEndpoint = $endpoint | .Parameters.openAiDeployment = $deployment' \
+    jq --arg endpoint "$OPENAI_ENDPOINT" --arg deployment "$OPENAI_DEPLOYMENT" --arg imageModel "$IMAGE_MODEL_DEPLOYMENT" \
+        '.Parameters.openAiEndpoint = $endpoint | .Parameters.openAiDeployment = $deployment | .Parameters.imageModelDeployment = $imageModel' \
         "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
 else
     # Fallback to sed if jq is not available (less robust but works for simple cases)
     sed -i.bak "s|\"openAiEndpoint\".*:.*\".*\"|\"openAiEndpoint\": \"$OPENAI_ENDPOINT\"|g" "$SETTINGS_FILE"
     sed -i.bak "s|\"openAiDeployment\".*:.*\".*\"|\"openAiDeployment\": \"$OPENAI_DEPLOYMENT\"|g" "$SETTINGS_FILE"
+    sed -i.bak "s|\"imageModelDeployment\".*:.*\".*\"|\"imageModelDeployment\": \"$IMAGE_MODEL_DEPLOYMENT\"|g" "$SETTINGS_FILE"
     rm -f "$SETTINGS_FILE.bak"
 fi
 
 echo -e "\033[0;32mapphost.settings.json configured successfully!\033[0m"
 echo -e "\033[0;36m  - OpenAI Endpoint: $OPENAI_ENDPOINT\033[0m"
 echo -e "\033[0;36m  - OpenAI Deployment: $OPENAI_DEPLOYMENT\033[0m"
+echo -e "\033[0;36m  - Image Model Deployment: $IMAGE_MODEL_DEPLOYMENT\033[0m"

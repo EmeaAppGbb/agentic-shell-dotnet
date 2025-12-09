@@ -69,12 +69,12 @@
 - ✅ Text formatting preserved
 - ❌ No markdown rendering
 - ❌ No code highlighting
-- ❌ No rich media support
 
 **Gaps:**
 - No streaming indicator (typing animation)
 - No error state display
 - No response time tracking
+- Rich media support covered in FR-7
 
 ### FR-5: Streaming Responses (Partial)
 
@@ -89,6 +89,53 @@
 - Backend supports streaming
 - Frontend receives streamed updates
 - User experience may not show true streaming (appears as single response)
+
+### FR-6: Multi-Agent Visual Differentiation
+
+**Requirement:** Each agent must be visually distinguishable in the chat interface with unique colors and clear identification
+
+**Acceptance Criteria:**
+- ❌ Each agent displays messages in a distinct color
+- ❌ Agent name/identifier clearly visible for each message
+- ❌ Color scheme ensures sufficient contrast for accessibility
+- ❌ Visual differentiation persists across conversation turns
+- ❌ User can easily identify which agent is responding
+
+**Gaps:**
+- No agent color assignment system
+- No agent identification in message UI
+- No color palette definition
+- No accessibility testing for color contrast
+
+**Current State:** Not implemented - all messages appear with same styling
+
+### FR-7: Rich Media Display
+
+**Requirement:** Interface must support displaying text, images, and video content from backend agents
+
+**Acceptance Criteria:**
+- ❌ Text content rendered with proper formatting
+- ❌ Images displayed inline within chat messages
+- ❌ Video content playable within chat interface
+- ❌ Media content responsive and properly sized
+- ❌ Loading states for media content
+- ❌ Error handling for failed media loads
+- ❌ Support for multiple media types in single message
+
+**Supported Media Types:**
+- Text (plain text, formatted text)
+- Images (JPEG, PNG, GIF, WebP)
+- Video (MP4, WebM)
+
+**Gaps:**
+- No image rendering capability
+- No video player integration
+- No media type detection
+- No media URL validation
+- No lazy loading for media
+- No media caching strategy
+
+**Current State:** Text-only messages supported
 
 ## Non-Functional Requirements
 
@@ -185,7 +232,21 @@
 **Required Fields:**
 - **Role**: Identifies message sender (user, assistant, or system)
 - **Content**: The text content of the message
+- **Agent ID** (new): Unique identifier for the agent that generated the message
+- **Agent Name** (new): Display name of the agent
+- **Agent Color** (new): Color code for visual differentiation (hex format)
+- **Media Content** (new): Array of media objects (images, videos)
 - **Metadata** (optional): Additional context or attributes
+
+### Media Content Structure
+
+**Media Object Fields:**
+- **Type**: Media type (image, video, text)
+- **URL**: Location of the media resource
+- **Alt Text**: Alternative text for accessibility (images)
+- **Thumbnail**: Preview image URL (videos)
+- **MIME Type**: Media format specification
+- **Size**: File size in bytes (optional)
 
 ### Conversation Events
 
@@ -195,6 +256,8 @@
 
 **Agent Response:**
 - AI-generated text responses
+- Agent identification (ID, name, color)
+- Media content array (if applicable)
 - Response metadata (timing, token count, etc.)
 
 ## Configuration Requirements
@@ -247,16 +310,23 @@
 3. **No Rich Content Support**
    - Text-only responses
    - No images, charts, or visualizations
+   - No video playback capability
    - No file attachments
    - No code execution
 
-4. **No User Customization**
+4. **No Multi-Agent Visual Differentiation**
+   - All agent messages appear identical
+   - No agent identification in UI
+   - Cannot distinguish between multiple agents
+   - No color-coding system
+
+5. **No User Customization**
    - Fixed agent instructions
    - No user preferences
    - No conversation settings
    - No theme customization
 
-5. **No Monitoring**
+6. **No Monitoring**
    - No conversation analytics
    - No user satisfaction tracking
    - No performance metrics
@@ -279,10 +349,13 @@
    - Multi-agent orchestration
 
 3. **Rich Media Support**
+   - ✅ Image display (now required)
+   - ✅ Video playback (now required)
    - Markdown rendering
    - Code syntax highlighting
    - Image generation
    - Chart creation
+   - Interactive visualizations
 
 4. **User Experience**
    - Typing indicators
@@ -310,11 +383,14 @@
 - Multi-turn conversations (depends on CopilotKit's context management)
 
 ### Not Implemented ❌
+- Multi-agent visual differentiation (FR-6)
+- Rich media display - images and video (FR-7)
 - Input validation
 - Rate limiting
 - Authentication
 - Conversation persistence
-- Rich content rendering
+- Markdown rendering
+- Code syntax highlighting
 - Accessibility verification
 - Performance testing
 - Monitoring and analytics

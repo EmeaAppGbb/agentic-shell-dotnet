@@ -12,22 +12,25 @@ public class DummyWorkflowFactory
     private readonly ILogger<DummyChatInputExecutor> _inputLogger;
     private readonly ILogger<GreetingExecutor> _greetingLogger;
     private readonly IChatClient _chatClient;
+    private readonly IImageGenerator _imageGenerator;
 
     public DummyWorkflowFactory(
         ILogger<DummyChatInputExecutor> chatInputLogger,
         ILogger<GreetingExecutor> greetingLogger,
-        IChatClient chatClient)
+        IChatClient chatClient,
+        IImageGenerator imageGenerator)
     {
         _inputLogger = chatInputLogger;
         _greetingLogger = greetingLogger;
         _chatClient = chatClient;
+        _imageGenerator = imageGenerator;
     }
 
     public Workflow BuildWorkflow(string name)
     {
         // Create executors
         var chatInput = new DummyChatInputExecutor(_inputLogger);
-        var greeting = new GreetingExecutor(_greetingLogger, _chatClient);
+        var greeting = new GreetingExecutor(_greetingLogger, _chatClient, _imageGenerator);
 
         // Build simple workflow: ChatInput -> Greeting
         var workflowBuilder = new WorkflowBuilder(chatInput)
@@ -89,15 +92,18 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse
 {
     private readonly ILogger<GreetingExecutor> _logger;
     private readonly AIAgent _agent;
-
-    public GreetingExecutor(ILogger<GreetingExecutor> logger, IChatClient chatClient) : base("Greeting")
+    private readonly IImageGenerator _imageGenerator;
+    public GreetingExecutor(ILogger<GreetingExecutor> logger, IChatClient chatClient, IImageGenerator imageGenerator) : base("Greeting")
     {
         _logger = logger;
+       
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
         {
             Name = "GreetingAgent",
             Instructions = "You are a friendly AI assistant. Greet the user warmly and respond to their message with enthusiasm."
         });
+
+        _imageGenerator = imageGenerator;
     }
 
     public override async ValueTask<AgentRunResponse> HandleAsync(
@@ -110,10 +116,21 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse
             _logger.LogInformation("Greeting executor received: {Input}", input.Input);
             _logger.LogInformation("Calling AI agent to generate greeting response");
 
-            var response = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
+            // Generate an image from a text prompt
+            var options = new ImageGenerationOptions
+            {
+                MediaType = "image/png",
+                ResponseFormat = ImageGenerationResponseFormat.Hosted
+            };
+            string prompt = "A tennis court in a jungle";
+            var response = await _imageGenerator.GenerateImagesAsync(prompt, options);
+            var dataContent = response.Contents.OfType<DataContent>().First();
+
+            var agentResponse = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
             
-            var responseText = response.Text ?? "Hi there!";
-            _logger.LogInformation("AI agent responded with: {Response}", responseText);
+            
+            var responseText = agentResponse.Text ?? "Hi there!";
+            _logger.LogInformation($"AI agent responded with: {responseText}, image was created at {dataContent.Uri}");
 
             return new AgentRunResponse { Text = responseText };
         }
@@ -128,10 +145,10 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse
 
 public class UserInputEvent
 {
-    public string Input { get; set; }
+    public required string Input { get; set; }
 }
 
 public class AgentRunResponse
 {
-    public string Text { get; set; }
+    public required string Text { get; set; }
 }
