@@ -15,6 +15,9 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpClient().AddLogging();
 builder.Services.AddAGUI();
 
+// Add health checks
+builder.Services.AddHealthChecks();
+
 string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT is not set.");
 
@@ -50,6 +53,9 @@ app.MapOpenAIConversations();
 
 // Map the dummy workflow agent to the default AGUI endpoint
 app.MapAGUI("/", dummyAgent);
+
+// Map health check endpoint
+app.MapHealthChecks("/health");
 
 if (builder.Environment.IsDevelopment())
 {

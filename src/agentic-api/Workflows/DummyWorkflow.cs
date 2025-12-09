@@ -1,3 +1,4 @@
+#pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates.
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
