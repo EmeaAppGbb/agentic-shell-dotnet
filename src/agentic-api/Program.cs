@@ -38,11 +38,21 @@ string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"]
 string deploymentName = builder.Configuration["AZURE_OPENAI_DEPLOYMENT_NAME"]
     ?? throw new InvalidOperationException("AZURE_OPENAI_DEPLOYMENT_NAME is not set.");
 
+string imageDeploymentName = builder.Configuration["AZURE_IMAGE_MODEL_DEPLOYMENT_NAME"]
+    ?? throw new InvalidOperationException("AZURE_IMAGE_MODEL_DEPLOYMENT_NAME is not set.");
+
 // Register IChatClient
 builder.Services.AddSingleton(_ =>
     new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
         .GetChatClient(deploymentName)
         .AsIChatClient());
+
+#pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+builder.Services.AddSingleton(_ =>
+    new AzureOpenAIClient(new Uri(endpoint), new DefaultAzureCredential())
+        .GetImageClient(imageDeploymentName)
+        .AsIImageGenerator());
+#pragma warning restore MEAI001 // Ty
 
 // Register the dummy workflow factory
 builder.Services.AddSingleton<DummyWorkflowFactory>();

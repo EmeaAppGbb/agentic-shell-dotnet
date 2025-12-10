@@ -1,7 +1,107 @@
 "use client";
 import { CopilotSidebar } from "@copilotkit/react-ui";
+import { useHumanInTheLoop } from "@copilotkit/react-core";
+import { useState } from "react";
 
 export default function Page() {
+  const [designImage, setDesignImage] = useState<string | null>(null);
+  const [copyrightText, setCopyrightText] = useState<string | null>(null);
+  // Human-in-the-loop tool for command approval
+  useHumanInTheLoop({
+    name: "approve_copyright_command",
+    description: "Ask the user to approve the copyright",
+    parameters: [
+      {
+        name: "copyright",
+        type: "string",
+        description: "The command to run",
+        required: true,
+      },
+    ],
+    render: ({ args, respond }) => {
+      if (!respond) return <></>;
+      
+      // Update state to show copyright in main area
+      setCopyrightText(args.copyright);
+      
+      return (
+        <div className="p-4 mb-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg shadow-md">
+          <p className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
+            🔐 Approval Required
+          </p>
+          <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-3">
+            Please review the copyright text in the main area and approve or deny:
+          </p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => respond("copy-approved")}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              ✓ Approve
+            </button>
+            <button 
+              onClick={() => {
+                setCopyrightText(null);
+                respond("copy-rejected");
+              }}
+              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              ✗ Deny
+            </button>
+          </div>
+        </div>
+      );
+    },
+  });
+
+  // Human-in-the-loop tool for design approval
+  useHumanInTheLoop({
+    name: "approve_design_command",
+    description: "Ask the user to approve the design",
+     parameters: [
+      {
+        name: "design",
+        type: "string",
+        description: "The design to review",
+        required: true,
+      },
+    ],
+    render: ({ args, respond }) => {
+      if (!respond) return <></>;
+      
+      // Update state to show image in main area
+      setDesignImage(args.design);
+      
+      return (
+        <div className="p-4 mb-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 dark:border-blue-700 rounded-lg shadow-md">
+          <p className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+            🎨 Design Approval Required
+          </p>
+          <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+            Please review the design in the main area and approve or reject:
+          </p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => respond("design-approved")}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              ✓ Approve
+            </button>
+            <button 
+              onClick={() => {
+                setDesignImage(null);
+                respond("design-rejected");
+              }}
+              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors shadow-md hover:shadow-lg"
+            >
+              ✗ Reject
+            </button>
+          </div>
+        </div>
+      );
+    },
+  });
+
   return (
     <CopilotSidebar
       defaultOpen={true}
@@ -14,6 +114,49 @@ export default function Page() {
     >
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-12 max-w-4xl">
+          {copyrightText && (
+            <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border-4 border-yellow-500 dark:border-yellow-400">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">
+                  🔐 Copyright Text
+                </h2>
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-semibold">
+                  ✓ Approved
+                </span>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg">
+                <pre className="text-green-600 dark:text-green-400 text-sm font-mono whitespace-pre-wrap break-words">
+                  {copyrightText}
+                </pre>
+              </div>
+              <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+                This copyright text has been approved
+              </p>
+            </div>
+          )}
+          {designImage && (
+            <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 border-4 border-blue-500 dark:border-blue-400">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  🎨 Design Preview
+                </h2>
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-semibold">
+                  ✓ Approved
+                </span>
+              </div>
+              <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={designImage} 
+                  alt="Design preview" 
+                  className="max-w-full h-auto rounded shadow-lg mx-auto"
+                />
+              </div>
+              <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+                This design has been approved
+              </p>
+            </div>
+          )}
           <div className="text-center space-y-6">
             <div className="inline-block p-3 bg-blue-100 dark:bg-blue-900 rounded-full mb-4">
               <svg 
