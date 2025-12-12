@@ -176,10 +176,13 @@ public sealed class TextGeneratorExecutor : Executor<UserInputEvent, AIContent>
             var responseText = agentResponse.Text ?? "Generated text content";
             _logger.LogInformation($"AI agent responded with {responseText.Length} characters");
             
-            return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_copyright_command", "approve_copyright_command", arguments: new Dictionary<string, object?>
-            {
-                { "copyright", responseText }
-            }));
+            return ApprovalRequestHelper.CreateApprovalRequest(
+                functionName: "approve_copyright_command",
+                arguments: new Dictionary<string, object?>
+                {
+                    { "copyright", responseText }
+                }
+            );
         }
         catch (Exception ex)
         {
@@ -189,6 +192,7 @@ public sealed class TextGeneratorExecutor : Executor<UserInputEvent, AIContent>
         }
     }
 }
+
 
 /// <summary>
 /// Final executor that completes the workflow and returns a final response.
@@ -272,10 +276,13 @@ public sealed class ImageGeneratorExecutor : Executor<UserInputEvent, AIContent>
             var dataContent = response.Contents.OfType<DataContent>().First();
 
             _logger.LogInformation($"Image was created at {dataContent.Uri}");
-            return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_design_command", "approve_design_command", arguments: new Dictionary<string, object?>
-            {
-                { "design", dataContent.Uri }
-            }));
+            return ApprovalRequestHelper.CreateApprovalRequest(
+                functionName: "approve_design_command",
+                arguments: new Dictionary<string, object?>
+                {
+                    { "design", dataContent.Uri }
+                }
+            );
         }
         catch (Exception ex)
         {

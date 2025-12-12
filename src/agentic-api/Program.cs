@@ -5,10 +5,7 @@ using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using agentic_api.Workflows;
-using agentic_api.Middleware;
 using Microsoft.Agents.AI.Hosting;
-using Polly;
-using Polly.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,15 +57,13 @@ builder.Services.AddSingleton<DummyWorkflowFactory>();
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
 
-builder.AddWorkflow("DummyWorkflow" , (sp, name) => {
+builder.AddWorkflow("DummyWorkflow", (sp, name) =>
+{
     var factory = sp.GetRequiredService<DummyWorkflowFactory>();
     return factory.BuildWorkflow("DummyWorkflow");
 }).AddAsAIAgent();
 
 var app = builder.Build();
-
-// Add error handling middleware
-app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Add request timeouts
 app.UseRequestTimeouts();
