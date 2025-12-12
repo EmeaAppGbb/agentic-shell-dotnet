@@ -1,3 +1,4 @@
+#pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates.
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
@@ -10,18 +11,24 @@ namespace agentic_api.Workflows;
 public class DummyWorkflowFactory
 {
     private readonly ILogger<DummyChatInputExecutor> _inputLogger;
-    private readonly ILogger<GreetingExecutor> _greetingLogger;
+    private readonly ILogger<TextGeneratorExecutor> _textGeneratorLogger;
+    private readonly ILogger<ImageGeneratorExecutor> _imageGeneratorLogger;
+    private readonly ILogger<FinalExecutor> _finalLogger;
     private readonly IChatClient _chatClient;
     private readonly IImageGenerator _imageGenerator;
 
     public DummyWorkflowFactory(
         ILogger<DummyChatInputExecutor> chatInputLogger,
-        ILogger<GreetingExecutor> greetingLogger,
+        ILogger<TextGeneratorExecutor> textGeneratorLogger,
+        ILogger<ImageGeneratorExecutor> imageGeneratorLogger,
+        ILogger<FinalExecutor> finalLogger,
         IChatClient chatClient,
         IImageGenerator imageGenerator)
     {
         _inputLogger = chatInputLogger;
-        _greetingLogger = greetingLogger;
+        _textGeneratorLogger = textGeneratorLogger;
+        _imageGeneratorLogger = imageGeneratorLogger;
+        _finalLogger = finalLogger;
         _chatClient = chatClient;
         _imageGenerator = imageGenerator;
     }
@@ -30,16 +37,41 @@ public class DummyWorkflowFactory
     {
         // Create executors
         var chatInput = new DummyChatInputExecutor(_inputLogger);
-        var greeting = new GreetingExecutor(_greetingLogger, _chatClient, _imageGenerator);
+        var textGenerator = new TextGeneratorExecutor(_textGeneratorLogger, _chatClient);
+        var imageGenerator = new ImageGeneratorExecutor(_imageGeneratorLogger, _chatClient, _imageGenerator);
+        var final = new FinalExecutor(_finalLogger);
 
-        // Build simple workflow: ChatInput -> Greeting
+        // Build workflow with conditional routing based on user input
         var workflowBuilder = new WorkflowBuilder(chatInput)
             .WithName(name)
-            .AddEdge(chatInput, greeting)
-            .WithOutputFrom(greeting);
+            .AddSwitch(chatInput, switchBuilder =>
+                switchBuilder.AddCase(GenerateText(), textGenerator)
+                             .AddCase(GenerateImage(), imageGenerator)
+                             .AddCase(FinalizeWorkflow(), final)
+                             .WithDefault(textGenerator)
+            )
+            .WithOutputFrom(textGenerator)
+            .WithOutputFrom(imageGenerator)
+            .WithOutputFrom(final);
 
         return workflowBuilder.Build();
     }
+
+    public static Func<UserInputEvent?, bool> GenerateText() => (input) =>
+    {
+        return input?.NextStep == DummyWorkflowSteps.GenerateText;
+    };
+
+    public static Func<UserInputEvent?, bool> GenerateImage() => (input) =>
+    {
+        return input?.NextStep == DummyWorkflowSteps.GenerateImage;
+    };
+
+    public static Func<UserInputEvent?, bool> FinalizeWorkflow() => (input) =>
+    {
+        return input?.NextStep == DummyWorkflowSteps.Finalize;
+    };
+
 }
 
 /// <summary>
@@ -65,11 +97,29 @@ public sealed class DummyChatInputExecutor : Executor
         CancellationToken cancellationToken = default)
     {
         var lastUserMessage = messages.LastOrDefault(m => m.Role == ChatRole.User);
-        var userInput = lastUserMessage?.Text ?? "Hello";
+        var approvalMessage = messages.LastOrDefault(m => m.Role == ChatRole.Tool);
+        var functionResult = approvalMessage?.Contents.OfType<FunctionResultContent>().FirstOrDefault();
 
-        _logger.LogInformation("Dummy Workflow started with input: {Input}", userInput);
+        var textApproved = functionResult?.Result?.ToString()?.Contains("text-approved");
+        var imageApproved = functionResult?.Result?.ToString()?.Contains("image-approved");
 
-        return new UserInputEvent { Input = userInput };
+        if (textApproved == true)
+        {
+            _logger.LogInformation("Text content approved by user.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateImage };
+        }
+
+        else if (imageApproved == true)
+        {
+            _logger.LogInformation("Image content approved by user.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.Finalize };
+        }
+
+        else
+        {
+            _logger.LogInformation("No approvals detected, proceeding to generate text content.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateText };
+        }
     }
 
     private async ValueTask<string> HandleTurnTokenAsync(
@@ -86,35 +136,129 @@ public sealed class DummyChatInputExecutor : Executor
 }
 
 /// <summary>
-/// Greeting executor that uses IChatClient to generate friendly AI greetings.
+/// Text generator executor that uses IChatClient to generate text content with human-in-the-loop approval.
 /// </summary>
-public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse>
+public sealed class TextGeneratorExecutor : Executor<UserInputEvent, AIContent>
 {
-    private readonly ILogger<GreetingExecutor> _logger;
+    private readonly ILogger<TextGeneratorExecutor> _logger;
     private readonly AIAgent _agent;
-    private readonly IImageGenerator _imageGenerator;
-    public GreetingExecutor(ILogger<GreetingExecutor> logger, IChatClient chatClient, IImageGenerator imageGenerator) : base("Greeting")
+    public TextGeneratorExecutor(ILogger<TextGeneratorExecutor> logger, IChatClient chatClient) : base("TextGenerator")
     {
         _logger = logger;
-       
+
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
         {
-            Name = "GreetingAgent",
-            Instructions = "You are a friendly AI assistant. Greet the user warmly and respond to their message with enthusiasm."
+            Name = "TextGeneratorAgent",
+            Instructions = "You are a helpful AI assistant that generates text content based on user input. Create clear, concise, and relevant responses. Keep your response under 4000 characters. Be brief and to the point."
         });
-
-        _imageGenerator = imageGenerator;
     }
 
-    public override async ValueTask<AgentRunResponse> HandleAsync(
+    public override async ValueTask<AIContent> HandleAsync(
         UserInputEvent input,
         IWorkflowContext context,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Greeting executor received: {Input}", input.Input);
-            _logger.LogInformation("Calling AI agent to generate greeting response");
+            _logger.LogInformation("Text generator executor received: {Input}", input.Input);
+            _logger.LogInformation("Calling AI agent to generate text content");
+
+            var options = new ChatOptions
+            {
+                MaxOutputTokens = 1000 // Approximately 4000 characters (1 token ≈ 4 chars)
+            };
+
+            var agentResponse = await _agent.RunAsync(
+                new ChatMessage(ChatRole.User, input.Input), 
+                options: new AgentRunOptions { AdditionalProperties = new() { ["ChatOptions"] = options } },
+                cancellationToken: cancellationToken);
+
+            var responseText = agentResponse.Text ?? "Generated text content";
+            _logger.LogInformation($"AI agent responded with {responseText.Length} characters");
+            
+            return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_copyright_command", "approve_copyright_command", arguments: new Dictionary<string, object?>
+            {
+                { "copyright", responseText }
+            }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in text generator executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+                ex.Message, ex.GetType().Name, ex.StackTrace);
+            return new TextContent("Sorry, I encountered an error while generating text content.");
+        }
+    }
+}
+
+/// <summary>
+/// Final executor that completes the workflow and returns a final response.
+/// </summary>
+public sealed class FinalExecutor : Executor<UserInputEvent, AIContent>
+{
+    private readonly ILogger<FinalExecutor> _logger;
+    public FinalExecutor(ILogger<FinalExecutor> logger) : base("Final")
+    {
+        _logger = logger;
+    }
+
+    public override async ValueTask<AIContent> HandleAsync(
+        UserInputEvent input,
+        IWorkflowContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Final executor received: {Input}", input.Input);
+            _logger.LogInformation("Completing workflow");
+
+
+            var responseText = "Workflow completed successfully!";
+            _logger.LogInformation($"Final response: {responseText}");
+
+            return new TextContent(responseText);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in final executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+                ex.Message, ex.GetType().Name, ex.StackTrace);
+            return new TextContent("An error occurred while finalizing the workflow.");
+        }
+    }
+}
+
+/// <summary>
+/// Image generator executor that creates images using IImageGenerator with human-in-the-loop approval.
+/// </summary>
+public sealed class ImageGeneratorExecutor : Executor<UserInputEvent, AIContent>
+{
+    private readonly ILogger<ImageGeneratorExecutor> _logger;
+    private readonly IImageGenerator _imageGenerator;
+
+    private readonly AIAgent _agent;
+    public ImageGeneratorExecutor(ILogger<ImageGeneratorExecutor> logger, IChatClient chatClient, IImageGenerator imageGenerator) : base("ImageGenerator")
+    {
+        _logger = logger;
+        _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
+                {
+                    Name = "ImagePromptAgent",
+                    Instructions = "You are an expert in generating prompts for image generation models. Take the user input and create a safe, detailed, and descriptive image generation prompt."
+                });
+        _imageGenerator = imageGenerator;
+    }
+
+    public override async ValueTask<AIContent> HandleAsync(
+        UserInputEvent input,
+        IWorkflowContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Image generator executor received: {Input}", input.Input);
+            _logger.LogInformation("Calling AI agent to generate image prompt");
+
+            var agentResponse = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
+
+            var imagePrompt = agentResponse.Text ?? "A scenic landscape";
 
             // Generate an image from a text prompt
             var options = new ImageGenerationOptions
@@ -122,33 +266,50 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AgentRunResponse
                 MediaType = "image/png",
                 ResponseFormat = ImageGenerationResponseFormat.Hosted
             };
-            string prompt = "A tennis court in a jungle";
-            var response = await _imageGenerator.GenerateImagesAsync(prompt, options);
+
+
+            var response = await _imageGenerator.GenerateImagesAsync(imagePrompt, options);
             var dataContent = response.Contents.OfType<DataContent>().First();
 
-            var agentResponse = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
-            
-            
-            var responseText = agentResponse.Text ?? "Hi there!";
-            _logger.LogInformation($"AI agent responded with: {responseText}, image was created at {dataContent.Uri}");
-
-            return new AgentRunResponse { Text = responseText };
+            _logger.LogInformation($"Image was created at {dataContent.Uri}");
+            return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_design_command", "approve_design_command", arguments: new Dictionary<string, object?>
+            {
+                { "design", dataContent.Uri }
+            }));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in greeting executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+            _logger.LogError(ex, "Error in image generator executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
                 ex.Message, ex.GetType().Name, ex.StackTrace);
-            return new AgentRunResponse { Text = "Hi! I had trouble processing your message, but I'm here to help!" };
+            return new TextContent("Sorry, I encountered an error while generating the image.");
         }
     }
+}
+
+public class WorkflowState
+{
+    public bool TextApproved { get; set; }
+    public bool ImageApproved { get; set; }
+
+    public string? TextContent { get; set; }
+    public string? ImageContent { get; set; }
 }
 
 public class UserInputEvent
 {
     public required string Input { get; set; }
+    public DummyWorkflowSteps NextStep { get; set; }
 }
 
 public class AgentRunResponse
 {
     public required string Text { get; set; }
+    public string? ImageUrl { get; set; }
+}
+
+public enum DummyWorkflowSteps
+{
+    GenerateText,
+    GenerateImage,
+    Finalize
 }
