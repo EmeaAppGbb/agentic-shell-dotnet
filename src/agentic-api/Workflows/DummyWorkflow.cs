@@ -11,24 +11,24 @@ namespace agentic_api.Workflows;
 public class DummyWorkflowFactory
 {
     private readonly ILogger<DummyChatInputExecutor> _inputLogger;
-    private readonly ILogger<GreetingExecutor> _greetingLogger;
-    private readonly ILogger<DesignerExecutor> _designerLogger;
-    private readonly ILogger<SummaryExecutor> _summaryLogger;
+    private readonly ILogger<TextGeneratorExecutor> _textGeneratorLogger;
+    private readonly ILogger<ImageGeneratorExecutor> _imageGeneratorLogger;
+    private readonly ILogger<FinalExecutor> _finalLogger;
     private readonly IChatClient _chatClient;
     private readonly IImageGenerator _imageGenerator;
 
     public DummyWorkflowFactory(
         ILogger<DummyChatInputExecutor> chatInputLogger,
-        ILogger<GreetingExecutor> greetingLogger,
-        ILogger<DesignerExecutor> designerLogger,
-        ILogger<SummaryExecutor> summaryLogger,
+        ILogger<TextGeneratorExecutor> textGeneratorLogger,
+        ILogger<ImageGeneratorExecutor> imageGeneratorLogger,
+        ILogger<FinalExecutor> finalLogger,
         IChatClient chatClient,
         IImageGenerator imageGenerator)
     {
         _inputLogger = chatInputLogger;
-        _greetingLogger = greetingLogger;
-        _designerLogger = designerLogger;
-        _summaryLogger = summaryLogger;
+        _textGeneratorLogger = textGeneratorLogger;
+        _imageGeneratorLogger = imageGeneratorLogger;
+        _finalLogger = finalLogger;
         _chatClient = chatClient;
         _imageGenerator = imageGenerator;
     }
@@ -37,39 +37,39 @@ public class DummyWorkflowFactory
     {
         // Create executors
         var chatInput = new DummyChatInputExecutor(_inputLogger);
-        var greeting = new GreetingExecutor(_greetingLogger, _chatClient);
-        var designer = new DesignerExecutor(_designerLogger,_chatClient, _imageGenerator);
-        var summary = new SummaryExecutor(_summaryLogger);
+        var textGenerator = new TextGeneratorExecutor(_textGeneratorLogger, _chatClient);
+        var imageGenerator = new ImageGeneratorExecutor(_imageGeneratorLogger, _chatClient, _imageGenerator);
+        var final = new FinalExecutor(_finalLogger);
 
-        // Build simple workflow: ChatInput -> Greeting
+        // Build workflow with conditional routing based on user input
         var workflowBuilder = new WorkflowBuilder(chatInput)
             .WithName(name)
             .AddSwitch(chatInput, switchBuilder =>
-                switchBuilder.AddCase(GenerateCopy(), greeting)
-                             .AddCase(GenerateDesign(), designer)
-                             .AddCase(Summarize(), summary)
-                             .WithDefault(greeting)
+                switchBuilder.AddCase(GenerateText(), textGenerator)
+                             .AddCase(GenerateImage(), imageGenerator)
+                             .AddCase(FinalizeWorkflow(), final)
+                             .WithDefault(textGenerator)
             )
-            .WithOutputFrom(greeting)
-            .WithOutputFrom(designer)
-            .WithOutputFrom(summary);
+            .WithOutputFrom(textGenerator)
+            .WithOutputFrom(imageGenerator)
+            .WithOutputFrom(final);
 
         return workflowBuilder.Build();
     }
 
-    public static Func<UserInputEvent?, bool> GenerateCopy() => (input) =>
+    public static Func<UserInputEvent?, bool> GenerateText() => (input) =>
     {
-        return input?.NextStep == DummyWorkflowSteps.GenerateCopy;
+        return input?.NextStep == DummyWorkflowSteps.GenerateText;
     };
 
-    public static Func<UserInputEvent?, bool> GenerateDesign() => (input) =>
+    public static Func<UserInputEvent?, bool> GenerateImage() => (input) =>
     {
-        return input?.NextStep == DummyWorkflowSteps.GenerateDesign;
+        return input?.NextStep == DummyWorkflowSteps.GenerateImage;
     };
 
-    public static Func<UserInputEvent?, bool> Summarize() => (input) =>
+    public static Func<UserInputEvent?, bool> FinalizeWorkflow() => (input) =>
     {
-        return input?.NextStep == DummyWorkflowSteps.Summary;
+        return input?.NextStep == DummyWorkflowSteps.Finalize;
     };
 
 }
@@ -100,25 +100,25 @@ public sealed class DummyChatInputExecutor : Executor
         var approvalMessage = messages.LastOrDefault(m => m.Role == ChatRole.Tool);
         var functionResult = approvalMessage?.Contents.OfType<FunctionResultContent>().FirstOrDefault();
 
-        var copyApproved = functionResult?.Result?.ToString()?.Contains("copy-approved");
-        var designApproved = functionResult?.Result?.ToString()?.Contains("design-approved");
+        var textApproved = functionResult?.Result?.ToString()?.Contains("text-approved");
+        var imageApproved = functionResult?.Result?.ToString()?.Contains("image-approved");
 
-        if (copyApproved == true)
+        if (textApproved == true)
         {
-            _logger.LogInformation("Copy approved by user.");
-            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateDesign };
+            _logger.LogInformation("Text content approved by user.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateImage };
         }
 
-        else if (designApproved == true)
+        else if (imageApproved == true)
         {
-            _logger.LogInformation("Design approved by user.");
-            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.Summary };
+            _logger.LogInformation("Image content approved by user.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.Finalize };
         }
 
         else
         {
-            _logger.LogInformation("No approvals detected, proceeding to generate copy.");
-            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateCopy };
+            _logger.LogInformation("No approvals detected, proceeding to generate text content.");
+            return new UserInputEvent { Input = lastUserMessage?.Text ?? "Hello", NextStep = DummyWorkflowSteps.GenerateText };
         }
     }
 
@@ -136,20 +136,20 @@ public sealed class DummyChatInputExecutor : Executor
 }
 
 /// <summary>
-/// Greeting executor that uses IChatClient to generate friendly AI greetings.
+/// Text generator executor that uses IChatClient to generate text content with human-in-the-loop approval.
 /// </summary>
-public sealed class GreetingExecutor : Executor<UserInputEvent, AIContent>
+public sealed class TextGeneratorExecutor : Executor<UserInputEvent, AIContent>
 {
-    private readonly ILogger<GreetingExecutor> _logger;
+    private readonly ILogger<TextGeneratorExecutor> _logger;
     private readonly AIAgent _agent;
-    public GreetingExecutor(ILogger<GreetingExecutor> logger, IChatClient chatClient) : base("Greeting")
+    public TextGeneratorExecutor(ILogger<TextGeneratorExecutor> logger, IChatClient chatClient) : base("TextGenerator")
     {
         _logger = logger;
 
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
         {
-            Name = "GreetingAgent",
-            Instructions = "You are a friendly AI marketing assistant. Create a short and funny marketing copy for the user input."
+            Name = "TextGeneratorAgent",
+            Instructions = "You are a helpful AI assistant that generates text content based on user input. Create clear, concise, and relevant responses. Keep your response under 4000 characters. Be brief and to the point."
         });
     }
 
@@ -160,13 +160,21 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AIContent>
     {
         try
         {
-            _logger.LogInformation("Greeting executor received: {Input}", input.Input);
-            _logger.LogInformation("Calling AI agent to generate greeting response");
+            _logger.LogInformation("Text generator executor received: {Input}", input.Input);
+            _logger.LogInformation("Calling AI agent to generate text content");
 
-            var agentResponse = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
+            var options = new ChatOptions
+            {
+                MaxOutputTokens = 1000 // Approximately 4000 characters (1 token ≈ 4 chars)
+            };
 
-            var responseText = agentResponse.Text ?? "Hi there!";
-            _logger.LogInformation($"AI agent responded with: {responseText}");
+            var agentResponse = await _agent.RunAsync(
+                new ChatMessage(ChatRole.User, input.Input), 
+                options: new AgentRunOptions { AdditionalProperties = new() { ["ChatOptions"] = options } },
+                cancellationToken: cancellationToken);
+
+            var responseText = agentResponse.Text ?? "Generated text content";
+            _logger.LogInformation($"AI agent responded with {responseText.Length} characters");
             
             return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_copyright_command", "approve_copyright_command", arguments: new Dictionary<string, object?>
             {
@@ -175,20 +183,20 @@ public sealed class GreetingExecutor : Executor<UserInputEvent, AIContent>
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in greeting executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+            _logger.LogError(ex, "Error in text generator executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
                 ex.Message, ex.GetType().Name, ex.StackTrace);
-            return new TextContent("Hi! I had trouble processing your message, but I'm here to help!");
+            return new TextContent("Sorry, I encountered an error while generating text content.");
         }
     }
 }
 
 /// <summary>
-/// Greeting executor that uses IChatClient to generate friendly AI greetings.
+/// Final executor that completes the workflow and returns a final response.
 /// </summary>
-public sealed class SummaryExecutor : Executor<UserInputEvent, AIContent>
+public sealed class FinalExecutor : Executor<UserInputEvent, AIContent>
 {
-    private readonly ILogger<SummaryExecutor> _logger;
-    public SummaryExecutor(ILogger<SummaryExecutor> logger) : base("Summary")
+    private readonly ILogger<FinalExecutor> _logger;
+    public FinalExecutor(ILogger<FinalExecutor> logger) : base("Final")
     {
         _logger = logger;
     }
@@ -200,40 +208,40 @@ public sealed class SummaryExecutor : Executor<UserInputEvent, AIContent>
     {
         try
         {
-            _logger.LogInformation("Summary executor received: {Input}", input.Input);
-            _logger.LogInformation("Calling AI agent to generate summary response");
+            _logger.LogInformation("Final executor received: {Input}", input.Input);
+            _logger.LogInformation("Completing workflow");
 
 
-            var responseText = "All Good!";
-            _logger.LogInformation($"AI agent responded with: {responseText}");
+            var responseText = "Workflow completed successfully!";
+            _logger.LogInformation($"Final response: {responseText}");
 
             return new TextContent(responseText);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in summary executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+            _logger.LogError(ex, "Error in final executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
                 ex.Message, ex.GetType().Name, ex.StackTrace);
-            return new TextContent("Hi! I had trouble processing your message, but I'm here to help!");
+            return new TextContent("An error occurred while finalizing the workflow.");
         }
     }
 }
 
 /// <summary>
-/// Greeting executor that uses IChatClient to generate friendly AI greetings.
+/// Image generator executor that creates images using IImageGenerator with human-in-the-loop approval.
 /// </summary>
-public sealed class DesignerExecutor : Executor<UserInputEvent, AIContent>
+public sealed class ImageGeneratorExecutor : Executor<UserInputEvent, AIContent>
 {
-    private readonly ILogger<DesignerExecutor> _logger;
+    private readonly ILogger<ImageGeneratorExecutor> _logger;
     private readonly IImageGenerator _imageGenerator;
 
     private readonly AIAgent _agent;
-    public DesignerExecutor(ILogger<DesignerExecutor> logger,IChatClient chatClient, IImageGenerator imageGenerator) : base("Designer")
+    public ImageGeneratorExecutor(ILogger<ImageGeneratorExecutor> logger, IChatClient chatClient, IImageGenerator imageGenerator) : base("ImageGenerator")
     {
         _logger = logger;
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
                 {
-                    Name = "GreetingAgent",
-                    Instructions = "You are a expert in generating prompts for image models. Take the user input for a campaign design and generate safe and detailed image generation prompt"
+                    Name = "ImagePromptAgent",
+                    Instructions = "You are an expert in generating prompts for image generation models. Take the user input and create a safe, detailed, and descriptive image generation prompt."
                 });
         _imageGenerator = imageGenerator;
     }
@@ -245,12 +253,12 @@ public sealed class DesignerExecutor : Executor<UserInputEvent, AIContent>
     {
         try
         {
-            _logger.LogInformation("Designer executor received: {Input}", input.Input);
-            _logger.LogInformation("Calling AI agent to generate image");
+            _logger.LogInformation("Image generator executor received: {Input}", input.Input);
+            _logger.LogInformation("Calling AI agent to generate image prompt");
 
             var agentResponse = await _agent.RunAsync(new ChatMessage(ChatRole.User, input.Input), cancellationToken: cancellationToken);
 
-            var imagePrompt = agentResponse.Text ?? "A tennis court in a jungle";
+            var imagePrompt = agentResponse.Text ?? "A scenic landscape";
 
             // Generate an image from a text prompt
             var options = new ImageGenerationOptions
@@ -263,7 +271,7 @@ public sealed class DesignerExecutor : Executor<UserInputEvent, AIContent>
             var response = await _imageGenerator.GenerateImagesAsync(imagePrompt, options);
             var dataContent = response.Contents.OfType<DataContent>().First();
 
-            _logger.LogInformation($"image was created at {dataContent.Uri}");
+            _logger.LogInformation($"Image was created at {dataContent.Uri}");
             return new FunctionApprovalRequestContent(Guid.NewGuid().ToString(), new FunctionCallContent("approve_design_command", "approve_design_command", arguments: new Dictionary<string, object?>
             {
                 { "design", dataContent.Uri }
@@ -271,20 +279,20 @@ public sealed class DesignerExecutor : Executor<UserInputEvent, AIContent>
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in designer executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
+            _logger.LogError(ex, "Error in image generator executor: {Message}. Type: {Type}. StackTrace: {StackTrace}",
                 ex.Message, ex.GetType().Name, ex.StackTrace);
-            return new TextContent("Hi! I had trouble processing your message, but I'm here to help!");
+            return new TextContent("Sorry, I encountered an error while generating the image.");
         }
     }
 }
 
 public class WorkflowState
 {
-    public bool CampaignApproved { get; set; }
-    public bool DesignApproved { get; set; }
+    public bool TextApproved { get; set; }
+    public bool ImageApproved { get; set; }
 
-    public string? Campaign { get; set; }
-    public string? Design { get; set; }
+    public string? TextContent { get; set; }
+    public string? ImageContent { get; set; }
 }
 
 public class UserInputEvent
@@ -301,7 +309,7 @@ public class AgentRunResponse
 
 public enum DummyWorkflowSteps
 {
-    GenerateCopy,
-    GenerateDesign,
-    Summary
+    GenerateText,
+    GenerateImage,
+    Finalize
 }
