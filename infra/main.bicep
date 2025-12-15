@@ -56,6 +56,7 @@ module resources 'resources.bicep' = {
     aiFoundryProjectEndpoint: aiModelsDeploy.outputs.ENDPOINT
     openAiEndpoint: aiModelsDeploy.outputs.OPENAI_ENDPOINT
     deploymentName: deploymentName
+    imageDeploymentName: imageModelDeploy.outputs.deploymentName
   }
 }
 
@@ -93,6 +94,21 @@ module aiSearchConnection 'modules/ai-search-conn.bicep' = {
     aiSearchName: resources.outputs.aiSearchName
   }
 }
+
+module imageModelDeploy 'modules/image-model.bicep' = {
+  scope: rg
+  name: 'image-model-deployment'
+  params: {
+    aiServicesAccountName: aiModelsDeploy.outputs.aiServicesAccountName
+    deploymentName: 'fluxKontextPro'
+    skuName: 'GlobalStandard'
+    skuCapacity: 1
+    format: 'Black Forest Labs'
+    modelName: 'FLUX.1-Kontext-pro'
+    modelVersion: '1'
+  }
+}
+
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = resources.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
 output AZURE_RESOURCE_AGENTIC_API_ID string = resources.outputs.AZURE_RESOURCE_AGENTIC_API_ID
 output AZURE_RESOURCE_AGENTIC_UI_ID string = resources.outputs.AZURE_RESOURCE_AGENTIC_UI_ID
@@ -103,3 +119,4 @@ output AZURE_AI_SEARCH_ENDPOINT string = resources.outputs.AZURE_AI_SEARCH_ENDPO
 output AZURE_RESOURCE_SEARCH_ID string = resources.outputs.AZURE_RESOURCE_SEARCH_ID
 output AZURE_OPENAI_ENDPOINT string = aiModelsDeploy.outputs.OPENAI_ENDPOINT
 output AZURE_OPENAI_DEPLOYMENT_NAME string = deploymentName
+output AZURE_IMAGE_MODEL_DEPLOYMENT_NAME string = imageModelDeploy.outputs.deploymentName

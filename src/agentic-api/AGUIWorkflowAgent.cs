@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
@@ -21,84 +20,67 @@ public class AGUIWorkflowAgent : DelegatingAIAgent
         AgentRunOptions? options = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var allUpdates = new List<AgentRunResponseUpdate>();
         await foreach (var update in this.InnerAgent.RunStreamingAsync(messages, thread, options, cancellationToken).ConfigureAwait(false))
         {
             switch (update.RawRepresentation)
             {
                 case WorkflowOutputEvent outputEvent:
-                    allUpdates.Add(update);
-                    yield return CreateUpdateFromEvent(update, outputEvent.Data);
-                    break;
-                    
-                // case ExecutorCompletedEvent completedEvent:
-                //     allUpdates.Add(update);
-                //     yield return CreateUpdateFromEvent(update, completedEvent.Data);
-                //     break;
-                    
-                // case SuperStepCompletedEvent superStepEvent:
-                //     allUpdates.Add(update);
-                //     yield return CreateUpdateFromEvent(update, superStepEvent.Data);
-                //     break;
-                    
+                    {
+                        yield return ExtractFunctionCallUpdate(update, outputEvent.Data);
+                        //yield return CreateUpdateFromEvent(update, outputEvent.Data);
+                        break;
+                    }
+
                 default:
-                    yield return update;
+                    yield return ExtractFunctionCallUpdate(update, update.RawRepresentation);
                     break;
             }
         }
     }
 
-    private static AgentRunResponseUpdate CreateUpdateFromEvent(AgentRunResponseUpdate update, object? data)
+    private static AgentRunResponseUpdate ExtractFunctionCallUpdate(AgentRunResponseUpdate update, object? data)
     {
-        var textContent = SerializeData(data);
-        
-        return new AgentRunResponseUpdate
+        IList<AIContent>? updatedContents = null;
+        var content = data;
+#pragma warning disable MEAI001 // Type is for evaluation purposes only
+        if (content is FunctionApprovalRequestContent request)
         {
-            AdditionalProperties = update.AdditionalProperties,
-            AgentId = update.AgentId,
-            AuthorName = update.AuthorName,
-            CreatedAt = update.CreatedAt,
-            Contents = { new TextContent(textContent) },
-            ContinuationToken = update.ContinuationToken,
-            MessageId = update.MessageId,
-            RawRepresentation = update.RawRepresentation,
-            ResponseId = update.ResponseId,
-            Role = update.Role
-        };
-    }
+            updatedContents ??= [.. update.Contents];
+            var functionCall = request.FunctionCall;
+            var approvalId = request.Id;
 
-    private static string SerializeData(object? data)
-    {
-        if (data == null)
-        {
-            return string.Empty;
+            updatedContents.Add(new FunctionCallContent(
+                callId: approvalId,
+                name: functionCall.Name,
+                arguments: functionCall.Arguments));
         }
-
-        // If it's already a string, return as-is
-        if (data is string str)
+        else if (content is TextContent textContent)
         {
-            return str;
+            updatedContents ??= [.. update.Contents];
+            updatedContents.Add(new TextContent(textContent.Text));
         }
+#pragma warning restore MEAI001
 
-        // For primitive types, use ToString()
-        if (data.GetType().IsPrimitive || data is DateTime || data is DateTimeOffset || data is Guid)
+        if (updatedContents is not null)
         {
-            return data.ToString() ?? string.Empty;
-        }
-
-        // For complex types, serialize to JSON
-        try
-        {
-            return JsonSerializer.Serialize(data, new JsonSerializerOptions
+            var chatUpdate = update.AsChatResponseUpdate();
+            // Yield a tool call update that represents the approval request
+            return new AgentRunResponseUpdate(new ChatResponseUpdate()
             {
-                WriteIndented = false,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
+                Role = chatUpdate.Role,
+                Contents = updatedContents,
+                MessageId = chatUpdate.MessageId,
+                AuthorName = chatUpdate.AuthorName,
+                CreatedAt = chatUpdate.CreatedAt,
+                RawRepresentation = chatUpdate.RawRepresentation,
+                ResponseId = chatUpdate.ResponseId,
+                AdditionalProperties = chatUpdate.AdditionalProperties
+            })
+            {
+                AgentId = update.AgentId,
+                ContinuationToken = update.ContinuationToken
+            };
         }
-        catch
-        {
-            // Fallback to ToString() if serialization fails
-            return data.ToString() ?? string.Empty;
-        }
+        return update;
     }
 }

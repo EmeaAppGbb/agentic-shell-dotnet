@@ -33,6 +33,7 @@ foreach ($line in $azdEnvOutput) {
 
 $OPENAI_ENDPOINT = if ($envVars.ContainsKey('AZURE_OPENAI_ENDPOINT')) { $envVars['AZURE_OPENAI_ENDPOINT'] } else { "" }
 $OPENAI_DEPLOYMENT = if ($envVars.ContainsKey('AZURE_OPENAI_DEPLOYMENT_NAME')) { $envVars['AZURE_OPENAI_DEPLOYMENT_NAME'] } else { "" }
+$IMAGE_MODEL_DEPLOYMENT = if ($envVars.ContainsKey('AZURE_IMAGE_MODEL_DEPLOYMENT_NAME')) { $envVars['AZURE_IMAGE_MODEL_DEPLOYMENT_NAME'] } else { "" }
 
 # Validate required variables
 if ([string]::IsNullOrEmpty($OPENAI_ENDPOINT)) {
@@ -45,11 +46,17 @@ if ([string]::IsNullOrEmpty($OPENAI_DEPLOYMENT)) {
     $OPENAI_DEPLOYMENT = ""
 }
 
+if ([string]::IsNullOrEmpty($IMAGE_MODEL_DEPLOYMENT)) {
+    Write-Host "Warning: AZURE_IMAGE_MODEL_DEPLOYMENT_NAME environment variable is not set" -ForegroundColor Yellow
+    $IMAGE_MODEL_DEPLOYMENT = ""
+}
+
 # Update the settings file
 try {
     $settingsContent = Get-Content $SETTINGS_FILE -Raw | ConvertFrom-Json
     $settingsContent.Parameters.openAiEndpoint = $OPENAI_ENDPOINT
     $settingsContent.Parameters.openAiDeployment = $OPENAI_DEPLOYMENT
+    $settingsContent.Parameters.imageModelDeployment = $IMAGE_MODEL_DEPLOYMENT
     $settingsContent | ConvertTo-Json -Depth 10 | Set-Content $SETTINGS_FILE
 } catch {
     Write-Host "Error updating settings file: $_" -ForegroundColor Red
@@ -59,3 +66,4 @@ try {
 Write-Host "apphost.settings.json configured successfully!" -ForegroundColor Green
 Write-Host "  - OpenAI Endpoint: $OPENAI_ENDPOINT" -ForegroundColor Cyan
 Write-Host "  - OpenAI Deployment: $OPENAI_DEPLOYMENT" -ForegroundColor Cyan
+Write-Host "  - Image Model Deployment: $IMAGE_MODEL_DEPLOYMENT" -ForegroundColor Cyan
