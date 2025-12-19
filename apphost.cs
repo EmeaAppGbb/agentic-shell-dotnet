@@ -5,6 +5,7 @@
 #:package Aspire.Hosting.Azure.CognitiveServices@13.1.0
 #:package Aspire.Hosting.Azure.AIFoundry@13.1.0-preview.1.25616.3
 #:package Aspire.Hosting.Azure.CosmosDB@13.1.0
+#:package Aspire.Hosting.Python@13.1.0
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -33,5 +34,11 @@ builder.AddJavaScriptApp("agentic-ui", "./src/agentic-ui")
     .WithHttpEndpoint(env: "PORT")
     .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
+
+// Documentation site using MkDocs
+builder.AddPythonModule("docs", "./specs", "mkdocs")
+    .WithArgs("serve", "--dev-addr", "0.0.0.0:8100")
+    .WithHttpEndpoint(targetPort: 8100, name: "http")
+    .ExcludeFromManifest();
 
 builder.Build().Run();

@@ -5,6 +5,42 @@
 
 https://github.com/user-attachments/assets/f0529e70-f437-4a14-93bc-4ab5a0450540
 
+# Enabling a New Blueprint for Building Software
+
+**Legend:**
+- 🟪 Pre-built code
+- 🟣 Code created w/ specs
+- 🟨 Specs
+- 🟧 Agent.md¹
+
+---
+
+## What it is
+
+A **Spec** is a structured, machine-readable blueprint that defines what a solution should do (purpose, inputs, outputs) to enable consistent automation, validation, and reuse.
+
+An **agent.md** file is like a "readme" / a manual designed for machine-readable instructions that help **coding agents** work effectively in your repo.
+
+---
+
+## Evolution Path
+
+| | **Current status (Crawl)** | **Spec enhanced (Walk)** | **Full Spec ahead (Run)** |
+|---|---|---|---|
+| **Specs** | | 🟨🟨🟨<br/>🟧 | 🟨🟨🟨🟨 **...**<br/>🟧 |
+| **Coded solution (e.g., accelerator)** | 🟪🟪🟪🟪🟪<br/>🟪🟪 | 🟣🟣🟣🟣🟣<br/>🟣🟣 | 🟣🟣🟣 Evals → 🟣🟣🟣<br/>🟣🟣🟣 Add. DB → 🟣🟣🟣 |
+| **Customer requirements** | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚫⚫ |
+| **Explanation** | Solutions delivered as rigid codebases that rarely match exact needs - require manual rework | A standardized core codebase is provided (Shell), then tailored to requirements through editable specs. | Entire solution "automatically" composed from specs, eliminating manual coding & adjustments |
+
+---
+
+## Advantages
+
+- ✓ Opinionated stack
+- ✓ Extensible
+- ✓ Simplified maintenance, change management
+- ✓ Faster time-to-PoC and time-to-prod
+
 ## 🎯 Overview
 
 This repository provides a preconfigured development environment and agent-driven workflow that takes you from product concept to deployed application through a structured, step-by-step process.
