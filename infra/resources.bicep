@@ -97,7 +97,12 @@ module cosmos 'br/public:avm/res/document-db/database-account:0.8.1' = {
     ]
     sqlRoleDefinitions: [
       {
-        name: 'service-access-cosmos-sql-role'
+        name: 'cosmosdb-data-plane-contributor'
+        dataAction: [
+          'Microsoft.DocumentDB/databaseAccounts/*'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
+          'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
+        ]
       }
     ]
     capabilitiesToAdd: [ 'EnableServerless' ]
@@ -354,3 +359,5 @@ output AZURE_RESOURCE_AGENTIC_STORAGE_ID string = '${cosmos.outputs.resourceId}/
 output AZURE_AI_SEARCH_ENDPOINT string = search.outputs.endpoint
 output AZURE_RESOURCE_SEARCH_ID string = search.outputs.resourceId
 output aiSearchName string = search.outputs.name
+output AZURE_COSMOS_NAME string = cosmos.outputs.name
+output AZURE_COSMOS_RESOURCE_GROUP string = cosmos.outputs.resourceGroupName

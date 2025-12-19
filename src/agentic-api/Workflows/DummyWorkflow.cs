@@ -149,8 +149,10 @@ public sealed class TextGeneratorExecutor : Executor<UserInputEvent, AIContent>
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
         {
             Name = "TextGeneratorAgent",
-            Instructions = "You are a helpful AI assistant that generates text content based on user input. Create clear, concise, and relevant responses. Keep your response under 4000 characters. Be brief and to the point."
-        });
+            ChatOptions = new ChatOptions
+            {
+               Instructions = "You are a helpful AI assistant that generates text content based on user input. Create clear, concise, and relevant responses. Keep your response under 4000 characters. Be brief and to the point."
+            }});
     }
 
     public override async ValueTask<AIContent> HandleAsync(
@@ -245,7 +247,10 @@ public sealed class ImageGeneratorExecutor : Executor<UserInputEvent, AIContent>
         _agent = new ChatClientAgent(chatClient, new ChatClientAgentOptions
                 {
                     Name = "ImagePromptAgent",
-                    Instructions = "You are an expert in generating prompts for image generation models. Take the user input and create a safe, detailed, and descriptive image generation prompt."
+                    ChatOptions = new ChatOptions
+                    {
+                        Instructions = "You are an expert in generating prompts for image generation models. Take the user input and create a safe, detailed, and descriptive image generation prompt."
+                    }
                 });
         _imageGenerator = imageGenerator;
     }

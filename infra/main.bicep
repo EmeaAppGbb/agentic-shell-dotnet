@@ -100,11 +100,11 @@ module imageModelDeploy 'modules/image-model.bicep' = {
   name: 'image-model-deployment'
   params: {
     aiServicesAccountName: aiModelsDeploy.outputs.aiServicesAccountName
-    deploymentName: 'fluxKontextPro'
+    deploymentName: 'FLUX2pro'
     skuName: 'GlobalStandard'
     skuCapacity: 1
     format: 'Black Forest Labs'
-    modelName: 'FLUX.1-Kontext-pro'
+    modelName: 'FLUX.2-pro'
     modelVersion: '1'
   }
 }
@@ -120,3 +120,5 @@ output AZURE_RESOURCE_SEARCH_ID string = resources.outputs.AZURE_RESOURCE_SEARCH
 output AZURE_OPENAI_ENDPOINT string = aiModelsDeploy.outputs.OPENAI_ENDPOINT
 output AZURE_OPENAI_DEPLOYMENT_NAME string = deploymentName
 output AZURE_IMAGE_MODEL_DEPLOYMENT_NAME string = imageModelDeploy.outputs.deploymentName
+output AZURE_COSMOS_NAME string = resources.outputs.AZURE_COSMOS_NAME
+output AZURE_COSMOS_RESOURCE_GROUP string = resources.outputs.AZURE_COSMOS_RESOURCE_GROUP
